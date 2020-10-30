@@ -60,9 +60,6 @@ public class Launcher implements Plugin<Project> {
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
-//        project.task("testPlugin").doLast(task -> {
-//            project.getLogger().lifecycle("Cybench test exec");
-//        });
     }
 
     public void execute(String buildPath,  LauncherConfiguration configuration, Project project) throws MojoExecutionException {
@@ -285,8 +282,6 @@ public class Launcher implements Plugin<Project> {
                 }
             }
         }
-
-
         return customUserProperties;
     }
 
@@ -331,157 +326,4 @@ public class Launcher implements Plugin<Project> {
             }));
         });
     }
-//            ClassLoader currentThreadClassLoader = Thread.currentThread().getContextClassLoader();
-//            URLClassLoader urlClassLoader = null;
-//            try {
-//                urlClassLoader = new URLClassLoader(new URL[]{new File(classPath).toURI().toURL()}, currentThreadClassLoader);
-//            } catch (MalformedURLException e) {
-//                e.printStackTrace();
-//            }
-//            Thread.currentThread().setContextClassLoader(urlClassLoader);
-//        --------------------------------------------------------------------------------------------------------
-//    public static void main(String[] args) throws Exception {
-//        int forks = 1;
-//        int measurementIterations = 1;
-//        int warmUpIterations = 1;
-//        int warmUpSeconds = 5;
-//        int threads = 1;
-//        OptionsBuilder optBuild = new OptionsBuilder();
-//        Options opt = optBuild
-//                .forks(forks)
-//                .measurementIterations(measurementIterations)
-//                .warmupIterations(warmUpIterations)
-//                .warmupTime(TimeValue.seconds(warmUpSeconds))
-//                .threads(threads)
-//                .shouldDoGC(true)
-//                .detectJvmArgs()
-//                .build();
-//        Runner runner = new Runner(opt);
-//        Collection<RunResult> results = null;
-//        try {
-//            results = runner.run();
-//        } catch (RunnerException e) {
-//            e.printStackTrace();
-//        }
-//       project.getLogger().lifecycle("Cybench launch result items:" + results.size());
-//    }
-//        --------------------------------------------------------------------------------------------------------
-//    private void configureJMHBenchmarkLocation(JavaPluginConvention pluginConvention) {
-//        SourceSet benchmarkSourceSet = pluginConvention.getSourceSets().create(BENCHMARK_SOURCESET_NAME);
-//        SourceSetContainer sourceSets = project.getConvention().getPlugin(JavaPluginConvention.class).getSourceSets();
-//        SourceSet mainSourceSet = sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME);
-//        SourceSet testSourceSet = sourceSets.getByName(SourceSet.TEST_SOURCE_SET_NAME);
-//
-//        ConfigurationContainer configurations = project.getConfigurations();
-//        benchmarkSourceSet.setCompileClasspath(project.files(mainSourceSet.getOutput(), testSourceSet.getOutput(),
-//                configurations.getByName(COMPILE_BENCHMARK_NAME)));
-//        benchmarkSourceSet.setRuntimeClasspath(project.files(mainSourceSet.getOutput(), testSourceSet.getOutput(),
-//                benchmarkSourceSet.getOutput(), configurations.getByName(RUNTIME_BENCHMARK_NAME)));
-//    }
-//        --------------------------------------------------------------------------------------------------------
-//
-//    private void configureConfigurations() {
-//        project.getRepositories().add(project.getRepositories().mavenCentral());
-//
-//        ConfigurationContainer configurations = project.getConfigurations();
-//        Configuration benchmarkCompile = configurations.getByName("benchmarkCompile");
-//        Configuration jmh = configurations.create(JMH_CONFIGURATION_NAME);
-//
-//        DependencyHandler dependencies = project.getDependencies();
-//        dependencies.add(JMH_CONFIGURATION_NAME, "org.openjdk.jmh:jmh-core:" + JMH_VERSION);
-//        dependencies.add(JMH_CONFIGURATION_NAME, "org.openjdk.jmh:jmh-generator-annprocess:" + JMH_VERSION);
-//
-//        benchmarkCompile.extendsFrom(jmh , configurations.getByName(JavaPlugin.TEST_COMPILE_CONFIGURATION_NAME));
-//    }
-
-//        --------------------------------------------------------------------------------------------------------
-//    private void defineBenchmarkJmhTask() {
-//        Task benchmarkJmhTask = project.getTasks().create(BENCHMARK_JMH_TASK_NAME, BenchmarkJmhTask.class);
-//        benchmarkJmhTask.setGroup(GRADLE_TASK_GROUP);
-//        benchmarkJmhTask.setDescription("Runs JMH benchmark tasks");
-//        benchmarkJmhTask.dependsOn(project.getTasks().getByName("compileJava"));
-//        benchmarkJmhTask.dependsOn(project.getTasks().getByName("processBenchmarkResources"));
-//        benchmarkJmhTask.dependsOn(project.getTasks().getByName("compileBenchmarkJava"));
-//    }
-
-//        --------------------------------------------------------------------------------------------------------
-    /*
-     * Add IDE support for benchmarks in test scopes if the IntelliJ or Eclipse plugins are available.
-     */
-//    private void configureIDESupport(final JavaPluginConvention javaPluginConvention) {
-//        final ConfigurationContainer configurations = project.getConfigurations();
-//        final PluginContainer plugins = project.getPlugins();
-//
-//        project.afterEvaluate(new Action<Project>() {
-//            @Override
-//            public void execute(Project project) {
-//                if (plugins.hasPlugin(EclipsePlugin.class)) {
-//                    EclipsePlugin eclipsePlugin = plugins.getPlugin(EclipsePlugin.class);
-//                    EclipseClasspath eclipseClasspath = eclipsePlugin.getModel().getClasspath();
-//                    eclipseClasspath.getPlusConfigurations().add(configurations.getByName(COMPILE_BENCHMARK_NAME));
-//                    eclipseClasspath.getPlusConfigurations().add(configurations.getByName(RUNTIME_BENCHMARK_NAME));
-//                    eclipsePlugin.getModel().setClasspath(eclipseClasspath);
-//                }
-//
-//                if (plugins.hasPlugin(IdeaPlugin.class)) {
-//                    IdeaPlugin ideaPlugin = plugins.getPlugin(IdeaPlugin.class);
-//                    IdeaModule ideaModule = ideaPlugin.getModel().getModule();
-//                    SourceSet benchmarkSourceSet = javaPluginConvention.getSourceSets().getByName(BENCHMARK_SOURCESET_NAME);
-//
-//                    Set<File> testSourceDirs = ideaModule.getTestSourceDirs();
-//                    testSourceDirs.addAll(benchmarkSourceSet.getAllJava().getSrcDirs());
-//                    testSourceDirs.addAll(benchmarkSourceSet.getResources().getSrcDirs());
-//                    ideaModule.setTestSourceDirs(testSourceDirs);
-//                    Collection<Configuration> testPlusScope = ideaModule.getScopes().get("TEST").get("plus");
-//                    testPlusScope.add(configurations.getByName(COMPILE_BENCHMARK_NAME));
-//                    testPlusScope.add(configurations.getByName(RUNTIME_BENCHMARK_NAME));
-//                }
-//            }
-//        });
-//    }
-
-//        --------------------------------------------------------------------------------------------------------
-
-    //        project.javaexec(javaExecSpec ->{
-//            javaExecSpec.setClasspath(sourceSets.getRuntimeClasspath());
-//            javaExecSpec.setMain(JMH_RUNNER);
-//        });
-
-//
-//        --------------------------------------------------------------------------------------------------------
-//        project.task("cybenchTest").doLast( task -> {
-//           project.getLogger().lifecycle("Cybench test exec");
-//            int forks = 1;
-//            int measurementIterations = 1;
-//            int warmUpIterations = 1;
-//            int warmUpSeconds = 5;
-//            int threads = 1;
-//            OptionsBuilder optBuild = new OptionsBuilder();
-//            Options opt = optBuild
-//                .forks(forks)
-//                .measurementIterations(measurementIterations)
-//                .warmupIterations(warmUpIterations)
-//                .warmupTime(TimeValue.seconds(warmUpSeconds))
-//                .threads(threads)
-//                .shouldDoGC(true)
-//                .detectJvmArgs()
-//                .build();
-//            Runner runner = new Runner(opt);
-//            Collection<RunResult> results = null;
-//            javaExecSpec.setMain(JMH_RUNNER);
-//            JavaPluginConvention jpc = project.getConvention().getPlugin(JavaPluginConvention.class);
-//            SortedMap<String, SourceSet> fcClasspath = jpc.getSourceSets().getAsMap();
-//            for (String set : fcClasspath.keySet()) {
-//                FileCollection collection =  fcClasspath.get(set).getRuntimeClasspath();
-//                javaExecSpec.setClasspath(collection);
-//            }
-//            try {
-//                results = runner.run();
-//            } catch (RunnerException e) {
-//                e.printStackTrace();
-//            }
-//           project.getLogger().lifecycle("Cybench launch result items:" + results.size());
-//        });
-
-//        --------------------------------------------------------------------------------------------------------
 }
