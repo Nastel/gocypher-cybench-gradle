@@ -288,29 +288,28 @@ public class Launcher implements Plugin<Project> {
     private void UpdateFieldViaReflection(Class<?> clazz, Object target, String fieldName, Object value) {
         try {
             Field listField = clazz.getDeclaredField(fieldName);
-            makeWriteable(listField);
+            updateFileAccess(listField);
             listField.set(target, value);
         } catch (Exception e) {
             throw new GradleException(
-                    "Error while instantiating tests: unable to set '" + fieldName + "' on " + clazz.getSimpleName() +
-                            ". This plugin version doesn't seem to be compatible with JMH " + 1.26 +
-                            ". Please report to the plugin authors at https://github.com/melix/jmh-gradle-plugin/.", e);
+                    "Error while instantiating tests: unable to set '" + fieldName + "' on " + clazz.getSimpleName(), e);
         }
     }
-    private static void makeWriteable(Field listField) throws NoSuchFieldException, IllegalAccessException {
+    private static void updateFileAccess(Field listField) throws NoSuchFieldException, IllegalAccessException {
         listField.setAccessible(true);
         Field modifiersField = Field.class.getDeclaredField("modifiers");
         modifiersField.setAccessible(true);
         modifiersField.setInt(listField, listField.getModifiers() & ~Modifier.FINAL);
     }
     public void cybenchTaskWithDirectJMH(Project project, SourceSet sourceSets) {
+        String buildPath = String.valueOf(project.getBuildDir());
         project.getTasks().create("cybench", task -> {
             task.doLast(it -> project.javaexec(javaExecSpec -> {
                 javaExecSpec.setClasspath(sourceSets.getRuntimeClasspath());
                 javaExecSpec.setMain(JMH_RUNNER);
                 javaExecSpec.setMaxHeapSize("4096m");
                project.getLogger().lifecycle("CLASSPATH: " +   System.getProperty("java.class.path"));
-                javaExecSpec.setWorkingDir(new File("C:/streams/k2/development/k2-benchmarks/test/build/classes/java/main"));
+                javaExecSpec.setWorkingDir(new File(buildPath+"/classes/java/main"));
                 ArrayList<String> toJmhRunner = new ArrayList<>();
                 toJmhRunner.add("-i");
                 toJmhRunner.add("2");
