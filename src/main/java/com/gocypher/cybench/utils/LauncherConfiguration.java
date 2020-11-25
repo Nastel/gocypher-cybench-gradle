@@ -1,4 +1,4 @@
-package com.gocypher.cybench.launcher.utils;
+package com.gocypher.cybench.utils;
 
 public class LauncherConfiguration {
     private int forks = 1;

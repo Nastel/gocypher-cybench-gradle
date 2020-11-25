@@ -10,7 +10,7 @@ import com.gocypher.cybench.launcher.report.DeliveryService;
 import com.gocypher.cybench.launcher.report.ReportingService;
 import com.gocypher.cybench.launcher.utils.ComputationUtils;
 import com.gocypher.cybench.launcher.utils.Constants;
-import com.gocypher.cybench.launcher.utils.LauncherConfiguration;
+import com.gocypher.cybench.utils.LauncherConfiguration;
 import com.gocypher.cybench.launcher.utils.SecurityBuilder;
 import com.jcabi.manifests.Manifests;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -69,14 +69,14 @@ public class Launcher implements Plugin<Project> {
        project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
         try {
             project.getLogger().lifecycle("Collecting hardware, software information...");
-            HardwareProperties hwProperties = CollectSystemInformation.getEnvironmentProperties(project);
+            HardwareProperties hwProperties = CollectSystemInformation.getEnvironmentProperties();
             project.getLogger().lifecycle("Collecting JVM properties...");
-            JVMProperties jvmProperties = CollectSystemInformation.getJavaVirtualMachineProperties(project);
+            JVMProperties jvmProperties = CollectSystemInformation.getJavaVirtualMachineProperties();
 
             //FIXME generate security hashes for report classes found on the classpath
             SecurityBuilder securityBuilder = new SecurityBuilder();
             Map<String, Object> benchmarkSettings = new HashMap<>();
-            Map<String, Map<String, String>> customBenchmarksMetadata = ComputationUtils.parseCustomBenchmarkMetadata(configuration.getUserProperties());
+            Map<String, Map<String, String>> customBenchmarksMetadata = ComputationUtils.parseBenchmarkMetadata(configuration.getUserProperties());
 
             this.checkAndConfigureCustomProperties(securityBuilder,benchmarkSettings,customBenchmarksMetadata, project) ;
             benchmarkSettings.put("benchThreadCount", configuration.getThreads());
@@ -107,12 +107,12 @@ public class Launcher implements Plugin<Project> {
 
             Collection<RunResult> results = runner.run();
 
-            BenchmarkOverviewReport report = ReportingService.getInstance().createBenchmarkReport(results, customBenchmarksMetadata, project);
+            BenchmarkOverviewReport report = ReportingService.getInstance().createBenchmarkReport(results, customBenchmarksMetadata);
             report.updateUploadStatus(configuration.getReportUploadStatus());
 
             report.getEnvironmentSettings().put("environment", hwProperties);
             report.getEnvironmentSettings().put("jvmEnvironment", jvmProperties);
-            report.getEnvironmentSettings().put("unclassifiedProperties", CollectSystemInformation.getUnclassifiedProperties(project));
+            report.getEnvironmentSettings().put("unclassifiedProperties", CollectSystemInformation.getUnclassifiedProperties());
             report.getEnvironmentSettings().put("userDefinedProperties", customUserDefinedProperties(configuration.getUserProperties()));
             report.setBenchmarkSettings(benchmarkSettings);
 
@@ -128,9 +128,7 @@ public class Launcher implements Plugin<Project> {
                     throw new MojoFailureException("CyBench score is less than expected:" + report.getTotalScore().doubleValue() + " < "+configuration.getExpectedScore());
                 }
             }
-
             String reportEncrypted = ReportingService.getInstance().prepareReportForDelivery(securityBuilder, report);
-
             String responseWithUrl = null;
             if (report.isEligibleForStoringExternally() && configuration.isShouldSendReportToCyBench()) {
                 responseWithUrl = DeliveryService.getInstance().sendReportForStoring(reportEncrypted);
@@ -139,16 +137,14 @@ public class Launcher implements Plugin<Project> {
                project.getLogger().lifecycle("You may submit your report '"+ IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE)+"' manually at "+ Constants.CYB_UPLOAD_URL);
             }
             if (configuration.isShouldStoreReportToFileSystem()) {
-               project.getLogger().lifecycle("Saving test results to '" + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_JSON_FILE) + "'");
-                IOUtils.storeResultsToFile(IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_JSON_FILE), reportJSON);
-               project.getLogger().lifecycle("Saving encrypted test results to '" + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE) + "'");
-                IOUtils.storeResultsToFile(IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE), reportEncrypted);
+                project.getLogger().lifecycle("Saving test results to '" + IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils.createFileNameForReport(configuration.getReportName(),start,report.getTotalScore(),false)) + "'");
+                IOUtils.storeResultsToFile(IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils.createFileNameForReport(configuration.getReportName(),start,report.getTotalScore(),false)), reportJSON);
+                project.getLogger().lifecycle("Saving encrypted test results to '" + IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils.createFileNameForReport(configuration.getReportName(),start,report.getTotalScore(),true)) + "'");
+                IOUtils.storeResultsToFile(IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils.createFileNameForReport(configuration.getReportName(),start,report.getTotalScore(),true)), reportEncrypted);
             }
            project.getLogger().lifecycle("Removing all temporary auto-generated files....");
             IOUtils.removeTestDataFiles();
            project.getLogger().lifecycle("Removed all temporary auto-generated files!!!");
-
-
 
         }catch (Throwable t){
             if (t.getMessage() != null && t.getMessage().contains("/META-INF/BenchmarkList")) {
@@ -194,7 +190,7 @@ public class Launcher implements Plugin<Project> {
             if (Manifests.exists("customBenchmarkMetadata")) {
                 manifestData = Manifests.read("customBenchmarkMetadata");
             }
-            Map<String, Map<String, String>> benchmarksMetadata = ComputationUtils.parseCustomBenchmarkMetadata(manifestData);
+            Map<String, Map<String, String>> benchmarksMetadata = ComputationUtils.parseBenchmarkMetadata(manifestData);
             Map<String, String> benchProps;
             if (manifestData != null) {
                 benchProps = ReportingService.getInstance().prepareBenchmarkSettings(tempBenchmark, benchmarksMetadata);
@@ -230,47 +226,7 @@ public class Launcher implements Plugin<Project> {
         });
 
     }
-    public void cybenchTaskWithDirectJMHTest(Project project, SourceSet sourceSets) throws MalformedURLException {
-        StringBuilder classpath = new StringBuilder();
-        String buildPath = String.valueOf(project.getBuildDir());
-        FileCollection test = sourceSets.getRuntimeClasspath();
-        classpath.append(test.getAsPath());
-        classpath.append(";"+buildPath);
-        System.setProperty("java.class.path",classpath.toString());
-        project.task("testTask").doLast( task -> {
-            int forks = 1;
-            int measurementIterations = 1;
-            int warmUpIterations = 1;
-            int warmUpSeconds = 5;
-            int threads = 1;
-            OptionsBuilder optBuild = new OptionsBuilder();
-            Options opt = optBuild
-                    .forks(forks)
-                    .jvmArgs("-Xms4096m -Xmx4096m")
-                    .measurementIterations(measurementIterations)
-                    .warmupIterations(warmUpIterations)
-                    .warmupTime(TimeValue.seconds(warmUpSeconds))
-                    .threads(threads)
-                    .shouldDoGC(true)
-                    .detectJvmArgs()
-                    .build();
-            Runner runner = new Runner(opt);
-            BenchmarkList benchmarkList = BenchmarkList.fromFile(buildPath+"/classes/java/main/META-INF/BenchmarkList");
-            CompilerHints compilerHints = CompilerHints.fromFile(buildPath+"/classes/java/main/META-INF/CompilerHints");
-            UpdateFieldViaReflection(runner.getClass(), runner, "list", benchmarkList);
-            UpdateFieldViaReflection(CompilerHints.class, compilerHints, "defaultList", compilerHints);
 
-            Collection<RunResult> results = null;
-            try {
-                results = runner.run();
-               project.getLogger().lifecycle("benchmarkList: " +   benchmarkList.toString());
-            } catch (RunnerException e) {
-                e.printStackTrace();
-            }
-           project.getLogger().lifecycle("Cybench launch result items:" + results.size());
-        });
-
-    }
     private static Map<String, Object> customUserDefinedProperties(String customPropertiesStr) {
         Map<String, Object> customUserProperties = new HashMap<>();
         if (customPropertiesStr != null && !customPropertiesStr.isEmpty()){
@@ -301,28 +257,5 @@ public class Launcher implements Plugin<Project> {
         modifiersField.setAccessible(true);
         modifiersField.setInt(listField, listField.getModifiers() & ~Modifier.FINAL);
     }
-    public void cybenchTaskWithDirectJMH(Project project, SourceSet sourceSets) {
-        String buildPath = String.valueOf(project.getBuildDir());
-        project.getTasks().create("cybench", task -> {
-            task.doLast(it -> project.javaexec(javaExecSpec -> {
-                javaExecSpec.setClasspath(sourceSets.getRuntimeClasspath());
-                javaExecSpec.setMain(JMH_RUNNER);
-                javaExecSpec.setMaxHeapSize("4096m");
-               project.getLogger().lifecycle("CLASSPATH: " +   System.getProperty("java.class.path"));
-                javaExecSpec.setWorkingDir(new File(buildPath+"/classes/java/main"));
-                ArrayList<String> toJmhRunner = new ArrayList<>();
-                toJmhRunner.add("-i");
-                toJmhRunner.add("2");
-                toJmhRunner.add("-f");
-                toJmhRunner.add("2");
-                toJmhRunner.add("-wf");
-                toJmhRunner.add("2");
-                toJmhRunner.add("-wi");
-                toJmhRunner.add("2");
-                toJmhRunner.add("-rf");
-                toJmhRunner.add("json");
-                javaExecSpec.setArgs(toJmhRunner);
-            }));
-        });
-    }
+
 }
