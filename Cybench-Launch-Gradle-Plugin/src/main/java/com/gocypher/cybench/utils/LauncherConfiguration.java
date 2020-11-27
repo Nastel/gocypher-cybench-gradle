@@ -34,6 +34,8 @@ public class LauncherConfiguration {
     private String reportName = "CyBench Report";
     private String userBenchmarkMetadata = "";
     private String userProperties = "";
+    
+    private boolean shouldFailBuildOnReportDeliveryFailure = false;
 
     private boolean skip =  false;
 
@@ -155,5 +157,13 @@ public class LauncherConfiguration {
 
     public void setMeasurementSeconds(int measurementSeconds) {
         this.measurementSeconds = measurementSeconds;
+    }
+
+    public boolean isShouldFailBuildOnReportDeliveryFailure() {
+        return shouldFailBuildOnReportDeliveryFailure;
+    }
+
+    public void setShouldFailBuildOnReportDeliveryFailure(boolean shouldFailBuildOnReportDeliveryFailure) {
+        this.shouldFailBuildOnReportDeliveryFailure = shouldFailBuildOnReportDeliveryFailure;
     }
 }

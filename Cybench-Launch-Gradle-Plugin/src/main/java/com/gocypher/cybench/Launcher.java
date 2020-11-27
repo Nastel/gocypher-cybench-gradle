@@ -86,9 +86,10 @@ public class Launcher implements Plugin<Project> {
        project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
        project.getLogger().lifecycle("                                 Starting CyBench benchmarks                             ");
        project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
+        System.setProperty("collectHw", "true");
+        boolean isReportSentSuccessFully = false ;
         try {
             project.getLogger().lifecycle("Collecting hardware, software information...");
-            System.setProperty("collectHw", "true");
             HardwareProperties hwProperties = CollectSystemInformation.getEnvironmentProperties();
             project.getLogger().lifecycle("Collecting JVM properties...");
             JVMProperties jvmProperties = CollectSystemInformation.getJavaVirtualMachineProperties();
@@ -154,6 +155,9 @@ public class Launcher implements Plugin<Project> {
             if (report.isEligibleForStoringExternally() && configuration.isShouldSendReportToCyBench()) {
                 responseWithUrl = DeliveryService.getInstance().sendReportForStoring(reportEncrypted);
                 report.setReportURL(responseWithUrl);
+                if (responseWithUrl != null && !responseWithUrl.isEmpty()){
+                    isReportSentSuccessFully = true ;
+                }
             } else {
                project.getLogger().lifecycle("You may submit your report '"+ IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE)+"' manually at "+ Constants.CYB_UPLOAD_URL);
             }
@@ -174,6 +178,10 @@ public class Launcher implements Plugin<Project> {
             else {
                 throw new MojoExecutionException("Error during benchmarks run", t);
             }
+        }
+
+        if (!isReportSentSuccessFully && configuration.isShouldSendReportToCyBench() &&  configuration.isShouldFailBuildOnReportDeliveryFailure()){
+            throw new MojoExecutionException("Error during benchmarks run, report was not sent to CyBench as configured!");
         }
        project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
        project.getLogger().lifecycle("         Finished CyBench benchmarking ("+ ComputationUtils.formatInterval(System.currentTimeMillis() - start) +")");
