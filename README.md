@@ -28,7 +28,7 @@ apply plugin: 'cybench-launcher'
 
 **Prerequisites**
 * A project must have dependencies to JMH framework and contain classes which implements benchmarks using JMH framework.
-* Until CyBench Gradle plugin and its dependencies are not released to Central Maven repository, must build `GoCypher CyBench Launch Gradle Plugin` locally and install it to local Maven repository. See section `CyBench Gradle Plugin Build` for details.
+* Until CyBench Gradle plugin and its dependencies are not released to Central Maven repository, must build `GoCypher CyBench Launch Gradle Plugin` locally and install it to local Maven repository. See section [CyBench Gradle Plugin Build](#CyBench Gradle Plugin Build) for details.
 
 **Configuration**
 
@@ -52,7 +52,7 @@ Plugin is configurable inside plugin configuration tags. Properties available fo
 | **skip**| A flag which allows to skip benchmarks execution during build process. Benchmarks execution also can be skipped via JVM system property `-DskipCybench`. |   false  |
 | **shouldFailBuildOnReportDeliveryFailure**| A flag which triggers build failure if the benchmark report was configured to be sent to CyBench but its delivery failed. |   false 
 
-### Example of Full CyBench Gradle plugin configuration
+## Example of Full CyBench Gradle plugin configuration
 
 ```build.gradle
 buildscript {
@@ -84,11 +84,11 @@ cybenchJMH{
 }
 ```
 
-### CyBench Gradle Plugin Build
+## CyBench Gradle Plugin Build
 
 This step is required in order to use CyBench Gradle plugin during build process until it and its dependencies are not released to Central Maven repository.
 
-### Build gocypher-cybench-runner project
+#### Build gocypher-cybench-runner project
 
 * Clone [GitHub repository](https://github.com/K2NIO/gocypher-cybench-java) to local machine.
 * Navigate to directory `gocypher-cybench-client`.
@@ -97,7 +97,7 @@ This step is required in order to use CyBench Gradle plugin during build process
      mvn clean install
 ```
 
-### Build  gocypher-cybench-gradle project
+#### Build  gocypher-cybench-gradle project
 
 * Clone [GitHub repository](https://github.com/K2NIO/gocypher-cybench-gradle) to local machine.
 * Navigate to directory `Cybench-Launch-Gradle-Plugin`.
