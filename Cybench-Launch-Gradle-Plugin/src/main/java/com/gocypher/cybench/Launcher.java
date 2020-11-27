@@ -107,6 +107,7 @@ public class Launcher implements Plugin<Project> {
             OptionsBuilder optBuild = new OptionsBuilder();
             Options opt = optBuild.forks(configuration.getForks())
                     .measurementIterations(configuration.getMeasurementIterations())
+                    .measurementTime(TimeValue.seconds(configuration.getMeasurementSeconds()))
                     .warmupIterations(configuration.getWarmUpIterations())
                     .warmupTime(TimeValue.seconds(configuration.getWarmUpSeconds()))
                     .threads(configuration.getThreads())

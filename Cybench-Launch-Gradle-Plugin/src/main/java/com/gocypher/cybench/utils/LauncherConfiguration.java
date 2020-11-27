@@ -23,6 +23,7 @@ public class LauncherConfiguration {
     private int forks = 1;
     private int threads = 1;
     private int measurementIterations = 1;
+    private int measurementSeconds = 10;
     private int warmUpIterations = 1;
     private int warmUpSeconds = 5;
     private double expectedScore = -1.0d;
@@ -146,5 +147,13 @@ public class LauncherConfiguration {
 
     public void setSkip(boolean skip) {
         this.skip = skip;
+    }
+
+    public int getMeasurementSeconds() {
+        return measurementSeconds;
+    }
+
+    public void setMeasurementSeconds(int measurementSeconds) {
+        this.measurementSeconds = measurementSeconds;
     }
 }
