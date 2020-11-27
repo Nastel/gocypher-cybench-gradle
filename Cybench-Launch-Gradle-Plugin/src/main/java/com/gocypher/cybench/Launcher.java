@@ -29,9 +29,8 @@ import com.gocypher.cybench.launcher.report.DeliveryService;
 import com.gocypher.cybench.launcher.report.ReportingService;
 import com.gocypher.cybench.launcher.utils.ComputationUtils;
 import com.gocypher.cybench.launcher.utils.Constants;
-import com.gocypher.cybench.utils.LauncherConfiguration;
 import com.gocypher.cybench.launcher.utils.SecurityBuilder;
-import com.jcabi.manifests.Manifests;
+import com.gocypher.cybench.utils.LauncherConfiguration;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.gradle.api.GradleException;
@@ -48,24 +47,17 @@ import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.BenchmarkList;
 import org.openjdk.jmh.runner.CompilerHints;
 import org.openjdk.jmh.runner.Runner;
-import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
-import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
 
-import java.io.File;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Launcher implements Plugin<Project> {
-    private static final String JMH_RUNNER = "org.openjdk.jmh.Main";
     private static final String BENCHMARK_LIST_FILE = "/classes/java/main/META-INF/BenchmarkList";
     private static final String COMPILER_HINT_FILE = "/classes/java/main/META-INF/CompilerHints";
 
@@ -76,7 +68,7 @@ public class Launcher implements Plugin<Project> {
         try {
             cybenchJMHReflectiveTask(project,sourceSets, configuration);
             project.getTasks().getByName("classes").finalizedBy("cybenchRun");
-        } catch (MalformedURLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -99,7 +91,6 @@ public class Launcher implements Plugin<Project> {
             Map<String, Object> benchmarkSettings = new HashMap<>();
             Map<String, Map<String, String>> customBenchmarksMetadata = ComputationUtils.parseBenchmarkMetadata(configuration.getUserProperties());
 
-            this.checkAndConfigureCustomProperties(securityBuilder,benchmarkSettings,customBenchmarksMetadata, project) ;
             benchmarkSettings.put("benchThreadCount", configuration.getThreads());
             benchmarkSettings.put("benchReportName", configuration.getReportName());
 
@@ -151,7 +142,7 @@ public class Launcher implements Plugin<Project> {
                 }
             }
             String reportEncrypted = ReportingService.getInstance().prepareReportForDelivery(securityBuilder, report);
-            String responseWithUrl = null;
+            String responseWithUrl;
             if (report.isEligibleForStoringExternally() && configuration.isShouldSendReportToCyBench()) {
                 responseWithUrl = DeliveryService.getInstance().sendReportForStoring(reportEncrypted);
                 report.setReportURL(responseWithUrl);
@@ -187,62 +178,13 @@ public class Launcher implements Plugin<Project> {
        project.getLogger().lifecycle("         Finished CyBench benchmarking ("+ ComputationUtils.formatInterval(System.currentTimeMillis() - start) +")");
        project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
     }
-    public static void addToClasspath(File file) {
-        try {
-            URL url = file.toURI().toURL();
-            URLClassLoader classLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
-            Method method = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
-            method.setAccessible(true);
-            method.invoke(classLoader, url);
-        } catch (Exception e) {
-            throw new RuntimeException("Unexpected exception", e);
-        }
-    }
-    private void checkAndConfigureCustomProperties (SecurityBuilder securityBuilder
-            ,Map<String,Object>benchmarkSettings
-            ,Map<String,Map<String,String>>customBenchmarksMetadata, Project project){
-
-        Reflections reflections = new Reflections("com.gocypher.cybench.", new SubTypesScanner(false));
-        Set<Class<? extends Object>> allDefaultClasses = reflections.getSubTypesOf(Object.class);
-        String tempBenchmark = null;
-        for (Class<? extends Object> classObj : allDefaultClasses) {
-            if (!classObj.getName().isEmpty() && classObj.getSimpleName().contains("Benchmarks")
-                    && !classObj.getSimpleName().contains("_")) {
-                // optBuild.include(classObj.getName());
-                tempBenchmark = classObj.getName();
-                securityBuilder.generateSecurityHashForClasses(classObj);
-            }
-        }
-        if (tempBenchmark != null) {
-           project.getLogger().lifecycle("tempBenchmark != null");
-            String manifestData = null;
-            if (Manifests.exists("customBenchmarkMetadata")) {
-                manifestData = Manifests.read("customBenchmarkMetadata");
-            }
-            Map<String, Map<String, String>> benchmarksMetadata = ComputationUtils.parseBenchmarkMetadata(manifestData);
-            Map<String, String> benchProps;
-            if (manifestData != null) {
-                benchProps = ReportingService.getInstance().prepareBenchmarkSettings(tempBenchmark, benchmarksMetadata);
-            } else {
-               project.getLogger().lifecycle("manifestData != null");
-                benchProps = ReportingService.getInstance().prepareBenchmarkSettings(tempBenchmark, customBenchmarksMetadata);
-            }
-            benchmarkSettings.putAll(benchProps);
-        } else{
-            benchmarkSettings.putIfAbsent("benchContext", "Custom");
-            benchmarkSettings.putIfAbsent("benchVersion", "Other");
-        }
-
-    }
-    public void cybenchJMHReflectiveTask(Project project, SourceSet sourceSets, LauncherConfiguration configuration) throws MalformedURLException {
+    public void cybenchJMHReflectiveTask(Project project, SourceSet sourceSets, LauncherConfiguration configuration) {
         StringBuilder classpath = new StringBuilder();
         String buildPath = String.valueOf(project.getBuildDir());
         FileCollection test = sourceSets.getRuntimeClasspath();
         classpath.append(test.getAsPath()).append(";").append(buildPath);
         System.setProperty("java.class.path",classpath.toString());
         project.task("cybenchRun").doLast( task -> {
-//            System.getProperty("skipCybench")  use -DskipCybench
-//            project.getLogger().lifecycle("System.getProperty(\"skipCybench\") " + System.getProperty("skipCybench") );
             if(!configuration.isSkip() && System.getProperty("skipCybench") == null ) {
                 try {
                     execute(buildPath, configuration, project);
