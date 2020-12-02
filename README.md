@@ -101,7 +101,7 @@ mvn install:install-file -Dfile=gocypher-cybench-runner-1.0.0-jar-with-dependenc
 ```
 ### Install CyBench Gradle plugin binaries
 
-Install CyBench Maven plugin binaries (subfolder in zip file `cybench-maven-plugin`) to local Maven repository using command:
+Install CyBench Maven plugin binaries (subfolder in zip file `cybench-gradle-plugin`) to local Maven repository using command:
 ```sh
 mvn install:install-file -Dfile=gocypher-cybench-gradle-0.0.1.jar -DpomFile=gocypher-cybench-gradle-0.0.1.pom
 ```
