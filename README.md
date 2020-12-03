@@ -83,8 +83,33 @@ cybenchJMH{
     skip = false
 }
 ```
+## CyBench Gradle Plugin Binaries install for immediate use
 
-## CyBench Gradle Plugin Build
+Releases page contains CyBench Gradle plugin (ina a jar shape) and its dependencies binaries (packaged in a zip file), which are possible to install to local Maven repository and start using it from any Gradle project immediatelly (without need to build any CyBench projects).
+
+**Prerequisites**
+
+* Maven command line tools on local machine.
+
+### Install of CyBench Launcher binaries
+
+Install CyBench launcher binaries (subfolder in zip file `cybench-launcher`) to local Maven repository using commands
+
+```sh
+mvn install:install-file -Dfile=gocypher-cybench-core-1.0.0.jar -DgroupId=com.gocypher.cybench.client -DartifactId=gocypher-cybench-core -Dversion=1.0.0 -Dpackaging=jar
+mvn install:install-file -Dfile=gocypher-cybench-runner-1.0.0-jar-with-dependencies.jar -DgroupId=com.gocypher.cybench.client -DartifactId=gocypher-cybench-runner -Dversion=1.0.0 -Dpackaging=jar
+```
+### Install CyBench Gradle plugin binaries
+
+Install CyBench Maven plugin binaries (subfolder in zip file `cybench-gradle-plugin`) to local Maven repository using command:
+```sh
+mvn install:install-file -Dfile=gocypher-cybench-gradle-0.0.1.jar -DpomFile=gocypher-cybench-gradle-0.0.1.pom
+```
+### Start using CyBench Gradle plugin
+
+Include dependecy to CyBench Gradle plugin in your project `build.gradle` file as described in the chapters above and start using it.
+
+## CyBench Gradle Plugin Building
 
 This step is required in order to use CyBench Gradle plugin during build process until it and its dependencies are not released to Central Maven repository.
 
