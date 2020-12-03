@@ -91,6 +91,12 @@ public class Launcher implements Plugin<Project> {
             Map<String, Object> benchmarkSettings = new HashMap<>();
             Map<String, Map<String, String>> customBenchmarksMetadata = ComputationUtils.parseBenchmarkMetadata(configuration.getUserProperties());
 
+            benchmarkSettings.put("benchWarmUpIteration",configuration.getWarmUpIterations());
+            benchmarkSettings.put("benchWarmUpSeconds", configuration.getWarmUpSeconds());
+            benchmarkSettings.put("benchMeasurementIteration", configuration.getMeasurementIterations());
+            benchmarkSettings.put("benchMeasurementSeconds", configuration.getMeasurementSeconds());
+            benchmarkSettings.put("benchForkCount", configuration.getForks());
+
             benchmarkSettings.put("benchThreadCount", configuration.getThreads());
             benchmarkSettings.put("benchReportName", configuration.getReportName());
 
