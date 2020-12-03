@@ -62,10 +62,14 @@ gradlePlugin {
         }
     }
 }
-publishing {
-    publications {
-        shadow(MavenPublication) {
-            artifact 'build/libs/gocypher-cybench-gradle-0.0.1-all.jar'
-        }
-    }
+
+
+shadowJar{
+    archiveClassifier  = ''
+}
+
+task release(type: Zip) {
+    from 'build/libs/'
+    include '*'
+    destinationDir(file('./release'))
 }
