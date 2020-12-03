@@ -60,6 +60,7 @@ import java.util.Map;
 public class Launcher implements Plugin<Project> {
     private static final String BENCHMARK_LIST_FILE = "/classes/java/main/META-INF/BenchmarkList";
     private static final String COMPILER_HINT_FILE = "/classes/java/main/META-INF/CompilerHints";
+    private static final  String benchSource = "Gradle plugin";
 
     @Override
     public void apply(Project project) {
@@ -91,6 +92,7 @@ public class Launcher implements Plugin<Project> {
             Map<String, Object> benchmarkSettings = new HashMap<>();
             Map<String, Map<String, String>> customBenchmarksMetadata = ComputationUtils.parseBenchmarkMetadata(configuration.getUserProperties());
 
+            benchmarkSettings.put("benchSource", benchSource);
             benchmarkSettings.put("benchWarmUpIteration",configuration.getWarmUpIterations());
             benchmarkSettings.put("benchWarmUpSeconds", configuration.getWarmUpSeconds());
             benchmarkSettings.put("benchMeasurementIteration", configuration.getMeasurementIterations());
