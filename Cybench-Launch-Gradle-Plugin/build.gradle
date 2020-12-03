@@ -16,9 +16,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
+import com.github.jengelman.gradle.plugins.shadow.tasks.ConfigureShadowRelocation
 
 plugins {
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
     id 'java-gradle-plugin'
+    id 'maven-publish'
     id 'java'
     id 'maven'
 }
@@ -32,6 +35,9 @@ repositories {
 }
 
 dependencies {
+    shadow localGroovy()
+    shadow gradleApi()
+
     testCompile group: 'junit', name: 'junit', version: '4.12'
     compile group: 'com.fasterxml.jackson.core', name:'jackson-core', version:'2.11.2'
     compile group: 'com.fasterxml.jackson.core', name:'jackson-databind', version:'2.11.2'
@@ -47,11 +53,19 @@ dependencies {
     compile group: 'org.reflections', name: 'reflections', version: '0.9.12'
     compile group: 'org.twdata.maven', name: 'mojo-executor', version: '2.3.1'
 }
+
 gradlePlugin {
     plugins {
         multiplePlugin{
             id = 'cybench-launcher'
             implementationClass = 'com.gocypher.cybench.Launcher'
+        }
+    }
+}
+publishing {
+    publications {
+        shadow(MavenPublication) {
+            artifact 'build/libs/gocypher-cybench-gradle-0.0.1-all.jar'
         }
     }
 }
