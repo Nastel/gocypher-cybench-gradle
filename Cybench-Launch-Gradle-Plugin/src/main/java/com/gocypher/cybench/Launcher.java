@@ -20,7 +20,9 @@
 package com.gocypher.cybench;
 
 import com.gocypher.cybench.core.utils.IOUtils;
+import com.gocypher.cybench.core.utils.JMHUtils;
 import com.gocypher.cybench.core.utils.JSONUtils;
+import com.gocypher.cybench.core.utils.SecurityUtils;
 import com.gocypher.cybench.launcher.environment.model.HardwareProperties;
 import com.gocypher.cybench.launcher.environment.model.JVMProperties;
 import com.gocypher.cybench.launcher.environment.services.CollectSystemInformation;
@@ -55,6 +57,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Launcher implements Plugin<Project> {
@@ -126,9 +129,29 @@ public class Launcher implements Plugin<Project> {
             UpdateFieldViaReflection(runner.getClass(), runner, "list", benchmarkList);
             UpdateFieldViaReflection(CompilerHints.class, compilerHints, "defaultList", compilerHints);
 
+            Map<String, String> generatedFingerprints = new HashMap<>();
+            Map<String, String> manualFingerprints = new HashMap<>();
+            Map<String, String> classFingerprints = new HashMap<>();
+
+            List<String> benchmarkNames = JMHUtils.getAllBenchmarkClasses();
+            for (String benchmarkClass : benchmarkNames) {
+                try {
+                    Class<?> classObj = Class.forName(benchmarkClass);
+                    SecurityUtils.generateMethodFingerprints(classObj, manualFingerprints, classFingerprints);
+                    SecurityUtils.computeClassHashForMethods(classObj, generatedFingerprints);
+                } catch (ClassNotFoundException exc) {
+                    project.getLogger().error("Class not found in the classpath for execution", exc);
+                }
+
+
+            }
+
+
             Collection<RunResult> results = runner.run();
 
             BenchmarkOverviewReport report = ReportingService.getInstance().createBenchmarkReport(results, customBenchmarksMetadata);
+
+
             report.updateUploadStatus(configuration.getReportUploadStatus());
 
             report.getEnvironmentSettings().put("environment", hwProperties);
@@ -137,6 +160,18 @@ public class Launcher implements Plugin<Project> {
             report.getEnvironmentSettings().put("userDefinedProperties", customUserDefinedProperties(configuration.getUserProperties()));
             report.setBenchmarkSettings(benchmarkSettings);
 
+
+            for (String benchmarkClass : benchmarkNames) {
+                try {
+                    Class<?> classObj = Class.forName(benchmarkClass);
+                    SecurityUtils.generateMethodFingerprints(classObj, manualFingerprints, classFingerprints);
+                    SecurityUtils.computeClassHashForMethods(classObj, generatedFingerprints);
+                } catch (ClassNotFoundException exc) {
+                    project.getLogger().error("Class not found in the classpath for execution", exc);
+                }
+
+
+            }
             //FIXME add all missing custom properties including public/private flag
 
            project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
