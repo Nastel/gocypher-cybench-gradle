@@ -27,6 +27,7 @@ import com.gocypher.cybench.launcher.environment.model.HardwareProperties;
 import com.gocypher.cybench.launcher.environment.model.JVMProperties;
 import com.gocypher.cybench.launcher.environment.services.CollectSystemInformation;
 import com.gocypher.cybench.launcher.model.BenchmarkOverviewReport;
+import com.gocypher.cybench.launcher.model.BenchmarkReport;
 import com.gocypher.cybench.launcher.report.DeliveryService;
 import com.gocypher.cybench.launcher.report.ReportingService;
 import com.gocypher.cybench.launcher.utils.ComputationUtils;
@@ -59,6 +60,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Launcher implements Plugin<Project> {
     private static final String BENCHMARK_LIST_FILE = "/classes/java/main/META-INF/BenchmarkList";
@@ -160,18 +162,15 @@ public class Launcher implements Plugin<Project> {
             report.getEnvironmentSettings().put("userDefinedProperties", customUserDefinedProperties(configuration.getUserProperties()));
             report.setBenchmarkSettings(benchmarkSettings);
 
+            List<BenchmarkReport> custom = report.getBenchmarks().get("CUSTOM").stream().collect(Collectors.toList());
+            custom.stream().forEach(benchmarkReport -> {
+                String name = benchmarkReport.getName();
+                benchmarkReport.setClassFingerprint(classFingerprints.get(name));
+                benchmarkReport.setGeneratedFingerprint(generatedFingerprints.get(name));
+                benchmarkReport.setManualFingerprint(manualFingerprints.get(name));
 
-            for (String benchmarkClass : benchmarkNames) {
-                try {
-                    Class<?> classObj = Class.forName(benchmarkClass);
-                    SecurityUtils.generateMethodFingerprints(classObj, manualFingerprints, classFingerprints);
-                    SecurityUtils.computeClassHashForMethods(classObj, generatedFingerprints);
-                } catch (ClassNotFoundException exc) {
-                    project.getLogger().error("Class not found in the classpath for execution", exc);
-                }
+            });
 
-
-            }
             //FIXME add all missing custom properties including public/private flag
 
            project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
