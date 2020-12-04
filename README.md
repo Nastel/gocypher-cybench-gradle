@@ -1,6 +1,6 @@
 # GoCypher CyBench Gradle plugin
 
-CyBench Gradle plugin allows running of CyBench benchmark tests, generating reports and sending it to CyBench website during software build process. Plugin is easy to attach to the project build.gradle file and can be used in continuous integration (CI) systems. 
+[CyBench](https://www.gocypher.com/cybench/) Gradle plugin allows running of CyBench benchmark tests, generating reports and sending it to CyBench website during software build process. Plugin is easy to attach to the project build.gradle file and can be used in continuous integration (CI) systems. 
 
 CyBench Gradle plugin executes all classes that use JMH framework for benchmark implementation and creates a report to specified location at the end of benchmarking process. 
 
@@ -28,7 +28,7 @@ apply plugin: 'cybench-launcher'
 
 **Prerequisites**
 * A project must have dependencies to JMH framework and contain classes which implements benchmarks using JMH framework.
-* Until CyBench Gradle plugin and its dependencies are not released to Central Maven repository, must build `GoCypher CyBench Launch Gradle Plugin` locally or download the binaries from release and install it to local Maven repository. See sections [CyBench Gradle Plugin Build](#cybench-gradle-plugin-building) or [CyBench Gradle Plugin Binaries install for immediate use](#cybench-gradle-plugin-binariesiinstall-for-immediate-use)for details.
+* Until CyBench Gradle plugin and its dependencies are not released to Central Maven repository, must build `GoCypher CyBench Launch Gradle Plugin` locally or download the binaries from release and install it to local Maven repository. See sections [CyBench Gradle Plugin Build](#cybench-gradle-plugin-building) or [CyBench Gradle Plugin Binaries install for immediate use](#cybench-gradle-plugin-binariesiinstall-for-immediate-use) for details.
 
 **Configuration**
 
