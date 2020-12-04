@@ -28,7 +28,7 @@ apply plugin: 'cybench-launcher'
 
 **Prerequisites**
 * A project must have dependencies to JMH framework and contain classes which implements benchmarks using JMH framework.
-* Until CyBench Gradle plugin and its dependencies are not released to Central Maven repository, must build `GoCypher CyBench Launch Gradle Plugin` locally or download the binaries from release and install it to local Maven repository. See sections [CyBench Gradle Plugin Build](#cybench-gradle-plugin-building) or [CyBench Gradle Plugin Binaries install for immediate use](#cybench-gradle-plugin-binariesiinstall-for-immediate-use) for details.
+* Until CyBench Gradle plugin and its dependencies are not released to Central Maven repository, must build `GoCypher CyBench Launch Gradle Plugin` locally or download the binaries from release and install it to local Maven repository. See sections [CyBench Gradle Plugin Build](#cybench-gradle-plugin-building) or [CyBench Gradle Plugin Binaries install for immediate use](#cybench-gradle-plugin-binaries-install-for-immediate-use) for details.
 
 **Configuration**
 
