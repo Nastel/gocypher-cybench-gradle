@@ -13,6 +13,7 @@ As CyBench report contains total score, it is possible to configure build failur
 
 The simplest configuration for the plugin requires:
 * adding the dependency to the plugin and applying the plugin task 'cybench-launcher'
+* the benchmarks can be included in test source or main source directory. *Note*: If both directories have benchmarks and compiles the *BenchmarksList* files the test source directory has Priority.
 
 ```build.gradle
 buildscript {
@@ -28,6 +29,13 @@ apply plugin: 'cybench-launcher'
 
 **Prerequisites**
 * A project must have dependencies to JMH framework and contain classes which implements benchmarks using JMH framework.
+```build.gradle
+    compile  group: 'org.openjdk.jmh', name: 'jmh-core', version: '1.26'
+    annotationProcessor  group: 'org.openjdk.jmh', name:'jmh-generator-annprocess', version:'1.26'
+    OR 
+    testAnnotationProcessor  group: 'org.openjdk.jmh', name:'jmh-generator-annprocess', version:'1.26'
+```
+
 * Until CyBench Gradle plugin and its dependencies are not released to Central Maven repository, must build `GoCypher CyBench Launch Gradle Plugin` locally or download the binaries from release and install it to local Maven repository. See sections [CyBench Gradle Plugin Build](#cybench-gradle-plugin-building) or [CyBench Gradle Plugin Binaries install for immediate use](#cybench-gradle-plugin-binaries-install-for-immediate-use) for details.
 
 **Configuration**
