@@ -54,6 +54,7 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
@@ -63,9 +64,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Launcher implements Plugin<Project> {
-    private static final String BENCHMARK_LIST_FILE = "/classes/java/main/META-INF/BenchmarkList";
-    private static final String COMPILER_HINT_FILE = "/classes/java/main/META-INF/CompilerHints";
+    private static final String BENCHMARK_LIST_FILE = "\\META-INF\\BenchmarkList";
+    private static final String COMPILER_HINT_FILE = "\\META-INF\\CompilerHints";
+    private static final String MAIN_SOURCE_ROOT = "\\classes\\java\\main";
+    private static final String TEST_SOURCE_ROOT = "\\classes\\java\\test";
     private static final  String benchSource = "Gradle plugin";
+
 
     @Override
     public void apply(Project project) {
@@ -73,7 +77,7 @@ public class Launcher implements Plugin<Project> {
         SourceSet sourceSets = project.getConvention().getPlugin(JavaPluginConvention.class).getSourceSets().getAt("main");
         try {
             cybenchJMHReflectiveTask(project,sourceSets, configuration);
-            project.getTasks().getByName("classes").finalizedBy("cybenchRun");
+            project.getTasks().getByName("testClasses").finalizedBy("cybenchRun");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -125,11 +129,21 @@ public class Launcher implements Plugin<Project> {
                     .build();
 
             Runner runner = new Runner(opt);
+            BenchmarkList benchmarkList;
+            CompilerHints compilerHints;
+            File benchmarkListFile = new File(buildPath + TEST_SOURCE_ROOT + BENCHMARK_LIST_FILE);
+            File compilerHintFile = new File(buildPath + TEST_SOURCE_ROOT + COMPILER_HINT_FILE);
+            project.getLogger().lifecycle("");
+            if(benchmarkListFile.exists() && compilerHintFile.exists()) {
+                benchmarkList = BenchmarkList.fromFile(buildPath + TEST_SOURCE_ROOT +  BENCHMARK_LIST_FILE);
+                compilerHints = CompilerHints.fromFile(buildPath + TEST_SOURCE_ROOT+  COMPILER_HINT_FILE);
+            }else{
+                benchmarkList = BenchmarkList.fromFile(buildPath + MAIN_SOURCE_ROOT +  BENCHMARK_LIST_FILE);
+                compilerHints = CompilerHints.fromFile(buildPath + MAIN_SOURCE_ROOT +  COMPILER_HINT_FILE);
+            }
+            UpdateFieldViaReflection(runner, "list", runner.getClass(), benchmarkList);
+            UpdateFieldViaReflection(compilerHints, "defaultList", CompilerHints.class, compilerHints);
 
-            BenchmarkList benchmarkList = BenchmarkList.fromFile(buildPath+BENCHMARK_LIST_FILE);
-            CompilerHints compilerHints = CompilerHints.fromFile(buildPath+COMPILER_HINT_FILE);
-            UpdateFieldViaReflection(runner.getClass(), runner, "list", benchmarkList);
-            UpdateFieldViaReflection(CompilerHints.class, compilerHints, "defaultList", compilerHints);
 
             Map<String, String> generatedFingerprints = new HashMap<>();
             Map<String, String> manualFingerprints = new HashMap<>();
@@ -170,8 +184,6 @@ public class Launcher implements Plugin<Project> {
                 benchmarkReport.setManualFingerprint(manualFingerprints.get(name));
 
             });
-
-            //FIXME add all missing custom properties including public/private flag
 
            project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
            project.getLogger().lifecycle("      Report score - "+report.getTotalScore());
@@ -223,8 +235,12 @@ public class Launcher implements Plugin<Project> {
     public void cybenchJMHReflectiveTask(Project project, SourceSet sourceSets, LauncherConfiguration configuration) {
         StringBuilder classpath = new StringBuilder();
         String buildPath = String.valueOf(project.getBuildDir());
+        String testBuildPath = project.getBuildDir() + TEST_SOURCE_ROOT;
         FileCollection test = sourceSets.getRuntimeClasspath();
-        classpath.append(test.getAsPath()).append(";").append(buildPath);
+        classpath.append(test.getAsPath()).append(";").append(testBuildPath);
+
+//        project.getLogger().lifecycle("classpath.toString(): "+classpath.toString());
+
         System.setProperty("java.class.path",classpath.toString());
         project.task("cybenchRun").doLast( task -> {
             if(!configuration.isSkip() && System.getProperty("skipCybench") == null ) {
@@ -254,14 +270,14 @@ public class Launcher implements Plugin<Project> {
         return customUserProperties;
     }
 
-    private void UpdateFieldViaReflection(Class<?> clazz, Object target, String fieldName, Object value) {
+    private void UpdateFieldViaReflection(Object target, String fieldName, Class<?> classObject, Object value) {
         try {
-            Field listField = clazz.getDeclaredField(fieldName);
+            Field listField = classObject.getDeclaredField(fieldName);
             updateFileAccess(listField);
             listField.set(target, value);
         } catch (Exception e) {
             throw new GradleException(
-                    "Error while instantiating tests: unable to set '" + fieldName + "' on " + clazz.getSimpleName(), e);
+                    "Error : unable to set '" + fieldName + "' on " + classObject.getSimpleName(), e);
         }
     }
     private static void updateFileAccess(Field listField) throws NoSuchFieldException, IllegalAccessException {
