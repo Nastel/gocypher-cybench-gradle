@@ -34,6 +34,8 @@ public class LauncherConfiguration {
     private String reportName = "CyBench Report";
     private String userBenchmarkMetadata = "";
     private String userProperties = "";
+
+    private boolean useCyBenchBenchmarkSettings = true;
     
     private boolean shouldFailBuildOnReportDeliveryFailure = false;
 
@@ -165,5 +167,13 @@ public class LauncherConfiguration {
 
     public void setShouldFailBuildOnReportDeliveryFailure(boolean shouldFailBuildOnReportDeliveryFailure) {
         this.shouldFailBuildOnReportDeliveryFailure = shouldFailBuildOnReportDeliveryFailure;
+    }
+
+    public boolean isUseCyBenchBenchmarkSettings() {
+        return useCyBenchBenchmarkSettings;
+    }
+
+    public void setUseCyBenchBenchmarkSettings(boolean useCyBenchBenchmarkSettings) {
+        this.useCyBenchBenchmarkSettings = useCyBenchBenchmarkSettings;
     }
 }

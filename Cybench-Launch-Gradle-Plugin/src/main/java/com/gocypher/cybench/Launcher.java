@@ -34,8 +34,9 @@ import com.gocypher.cybench.launcher.utils.ComputationUtils;
 import com.gocypher.cybench.launcher.utils.Constants;
 import com.gocypher.cybench.launcher.utils.SecurityBuilder;
 import com.gocypher.cybench.utils.LauncherConfiguration;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
+import com.sun.org.apache.bcel.internal.Repository;
+import com.sun.org.apache.bcel.internal.classfile.JavaClass;
+import com.sun.org.apache.bcel.internal.classfile.Method;
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -48,6 +49,7 @@ import org.openjdk.jmh.profile.HotspotThreadProfiler;
 import org.openjdk.jmh.profile.SafepointsProfiler;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.BenchmarkList;
+import org.openjdk.jmh.runner.BenchmarkListEntry;
 import org.openjdk.jmh.runner.CompilerHints;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.options.Options;
@@ -57,10 +59,11 @@ import org.openjdk.jmh.runner.options.TimeValue;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.security.MessageDigest;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Launcher implements Plugin<Project> {
@@ -68,7 +71,7 @@ public class Launcher implements Plugin<Project> {
     private static final String COMPILER_HINT_FILE = "\\META-INF\\CompilerHints";
     private static final String MAIN_SOURCE_ROOT = "\\classes\\java\\main";
     private static final String TEST_SOURCE_ROOT = "\\classes\\java\\test";
-    private static final  String benchSource = "Gradle plugin";
+    private static final  String BENCH_SOURCE = "Gradle plugin";
 
 
     @Override
@@ -83,11 +86,11 @@ public class Launcher implements Plugin<Project> {
         }
     }
 
-    public void execute(String buildPath,  LauncherConfiguration configuration, Project project) throws MojoExecutionException {
+    public void execute(String buildPath,  LauncherConfiguration configuration, Project project) throws GradleException {
         long start = System.currentTimeMillis();
-       project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
-       project.getLogger().lifecycle("                                 Starting CyBench benchmarks                             ");
-       project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
+        project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
+        project.getLogger().lifecycle("                                 Starting CyBench benchmarks                             ");
+        project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
         System.setProperty("collectHw", "true");
         boolean isReportSentSuccessFully = false ;
         try {
@@ -96,12 +99,11 @@ public class Launcher implements Plugin<Project> {
             project.getLogger().lifecycle("Collecting JVM properties...");
             JVMProperties jvmProperties = CollectSystemInformation.getJavaVirtualMachineProperties();
 
-            //FIXME generate security hashes for report classes found on the classpath
             SecurityBuilder securityBuilder = new SecurityBuilder();
             Map<String, Object> benchmarkSettings = new HashMap<>();
             Map<String, Map<String, String>> customBenchmarksMetadata = ComputationUtils.parseBenchmarkMetadata(configuration.getUserProperties());
 
-            benchmarkSettings.put("benchSource", benchSource);
+            benchmarkSettings.put("benchSource", BENCH_SOURCE);
             benchmarkSettings.put("benchWarmUpIteration",configuration.getWarmUpIterations());
             benchmarkSettings.put("benchWarmUpSeconds", configuration.getWarmUpSeconds());
             benchmarkSettings.put("benchMeasurementIteration", configuration.getMeasurementIterations());
@@ -114,26 +116,36 @@ public class Launcher implements Plugin<Project> {
            project.getLogger().lifecycle("Executing benchmarks...");
 
             OptionsBuilder optBuild = new OptionsBuilder();
-            Options opt = optBuild.forks(configuration.getForks())
-                    .measurementIterations(configuration.getMeasurementIterations())
-                    .measurementTime(TimeValue.seconds(configuration.getMeasurementSeconds()))
-                    .warmupIterations(configuration.getWarmUpIterations())
-                    .warmupTime(TimeValue.seconds(configuration.getWarmUpSeconds()))
-                    .threads(configuration.getThreads())
-                    .shouldDoGC(true)
-                    .addProfiler(GCProfiler.class)
-                    .addProfiler(HotspotThreadProfiler.class)
-                    .addProfiler(HotspotRuntimeProfiler.class)
-                    .addProfiler(SafepointsProfiler.class)
-                    .detectJvmArgs()
-                    .build();
-
+            Options opt;
+            if(configuration.isUseCyBenchBenchmarkSettings()) {
+                opt = optBuild
+                        .forks(configuration.getForks())
+                        .measurementIterations(configuration.getMeasurementIterations())
+                        .measurementTime(TimeValue.seconds(configuration.getMeasurementSeconds()))
+                        .warmupIterations(configuration.getWarmUpIterations())
+                        .warmupTime(TimeValue.seconds(configuration.getWarmUpSeconds()))
+                        .threads(configuration.getThreads())
+                        .shouldDoGC(true)
+                        .addProfiler(GCProfiler.class)
+                        .addProfiler(HotspotThreadProfiler.class)
+                        .addProfiler(HotspotRuntimeProfiler.class)
+                        .addProfiler(SafepointsProfiler.class)
+                        .detectJvmArgs()
+                        .build();
+            }else{
+                opt = optBuild.shouldDoGC(true)
+                        .addProfiler(GCProfiler.class)
+                        .addProfiler(HotspotThreadProfiler.class)
+                        .addProfiler(HotspotRuntimeProfiler.class)
+                        .addProfiler(SafepointsProfiler.class)
+                        .detectJvmArgs()
+                        .build();
+            }
             Runner runner = new Runner(opt);
             BenchmarkList benchmarkList;
             CompilerHints compilerHints;
             File benchmarkListFile = new File(buildPath + TEST_SOURCE_ROOT + BENCHMARK_LIST_FILE);
             File compilerHintFile = new File(buildPath + TEST_SOURCE_ROOT + COMPILER_HINT_FILE);
-            project.getLogger().lifecycle("");
             if(benchmarkListFile.exists() && compilerHintFile.exists()) {
                 benchmarkList = BenchmarkList.fromFile(buildPath + TEST_SOURCE_ROOT +  BENCHMARK_LIST_FILE);
                 compilerHints = CompilerHints.fromFile(buildPath + TEST_SOURCE_ROOT+  COMPILER_HINT_FILE);
@@ -148,26 +160,10 @@ public class Launcher implements Plugin<Project> {
             Map<String, String> generatedFingerprints = new HashMap<>();
             Map<String, String> manualFingerprints = new HashMap<>();
             Map<String, String> classFingerprints = new HashMap<>();
-
-            List<String> benchmarkNames = JMHUtils.getAllBenchmarkClasses();
-            for (String benchmarkClass : benchmarkNames) {
-                try {
-                    Class<?> classObj = Class.forName(benchmarkClass);
-                    SecurityUtils.generateMethodFingerprints(classObj, manualFingerprints, classFingerprints);
-                    SecurityUtils.computeClassHashForMethods(classObj, generatedFingerprints);
-                } catch (ClassNotFoundException exc) {
-                    project.getLogger().error("Class not found in the classpath for execution", exc);
-                }
-
-
-            }
-
+            fingerprintAndHashGeneration(project, benchmarkList, generatedFingerprints, manualFingerprints, classFingerprints);
 
             Collection<RunResult> results = runner.run();
-
             BenchmarkOverviewReport report = ReportingService.getInstance().createBenchmarkReport(results, customBenchmarksMetadata);
-
-
             report.updateUploadStatus(configuration.getReportUploadStatus());
 
             report.getEnvironmentSettings().put("environment", hwProperties);
@@ -176,29 +172,32 @@ public class Launcher implements Plugin<Project> {
             report.getEnvironmentSettings().put("userDefinedProperties", customUserDefinedProperties(configuration.getUserProperties()));
             report.setBenchmarkSettings(benchmarkSettings);
 
-            List<BenchmarkReport> custom = report.getBenchmarks().get("CUSTOM").stream().collect(Collectors.toList());
-            custom.stream().forEach(benchmarkReport -> {
-                String name = benchmarkReport.getName();
-                benchmarkReport.setClassFingerprint(classFingerprints.get(name));
-                benchmarkReport.setGeneratedFingerprint(generatedFingerprints.get(name));
-                benchmarkReport.setManualFingerprint(manualFingerprints.get(name));
+            for (String s : report.getBenchmarks().keySet()) {
+                List<BenchmarkReport> custom = report.getBenchmarks().get(s).stream().collect(Collectors.toList());
+                custom.stream().forEach(benchmarkReport -> {
+                    String name = benchmarkReport.getName();
+                    benchmarkReport.setClassFingerprint(classFingerprints.get(name));
+                    benchmarkReport.setGeneratedFingerprint(generatedFingerprints.get(name));
+                    benchmarkReport.setManualFingerprint(manualFingerprints.get(name));
 
-            });
+                });
+            }
 
            project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
            project.getLogger().lifecycle("      Report score - "+report.getTotalScore());
            project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
             String reportJSON = JSONUtils.marshalToPrettyJson(report);
-           project.getLogger().lifecycle(reportJSON) ;
             if (configuration.getExpectedScore() > 0 ) {
                 if (report.getTotalScore().doubleValue() < configuration.getExpectedScore()) {
-                    throw new MojoFailureException("CyBench score is less than expected:" + report.getTotalScore().doubleValue() + " < "+configuration.getExpectedScore());
+                    throw new GradleException("CyBench score is less than expected:" + report.getTotalScore().doubleValue() + " < "+configuration.getExpectedScore());
                 }
             }
             String reportEncrypted = ReportingService.getInstance().prepareReportForDelivery(securityBuilder, report);
             String responseWithUrl;
             if (report.isEligibleForStoringExternally() && configuration.isShouldSendReportToCyBench()) {
                 responseWithUrl = DeliveryService.getInstance().sendReportForStoring(reportEncrypted);
+                project.getLogger().lifecycle("responseWithUrl: "+ responseWithUrl);
+                project.getLogger().lifecycle(" report.getClass().getClassLoader(): "+ report.getClass().getClassLoader());
                 report.setReportURL(responseWithUrl);
                 if (responseWithUrl != null && !responseWithUrl.isEmpty()){
                     isReportSentSuccessFully = true ;
@@ -206,6 +205,8 @@ public class Launcher implements Plugin<Project> {
             } else {
                project.getLogger().lifecycle("You may submit your report '"+ IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE)+"' manually at "+ Constants.CYB_UPLOAD_URL);
             }
+            project.getLogger().lifecycle(reportJSON) ;
+            project.getLogger().lifecycle("isReportSentSuccessFully: "+ isReportSentSuccessFully);
             if (configuration.isShouldStoreReportToFileSystem()) {
                 project.getLogger().lifecycle("Saving test results to '" + IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils.createFileNameForReport(configuration.getReportName(),start,report.getTotalScore(),false)) + "'");
                 IOUtils.storeResultsToFile(IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils.createFileNameForReport(configuration.getReportName(),start,report.getTotalScore(),false)), reportJSON);
@@ -213,25 +214,83 @@ public class Launcher implements Plugin<Project> {
                 IOUtils.storeResultsToFile(IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils.createFileNameForReport(configuration.getReportName(),start,report.getTotalScore(),true)), reportEncrypted);
             }
            project.getLogger().lifecycle("Removing all temporary auto-generated files....");
-            IOUtils.removeTestDataFiles();
+           IOUtils.removeTestDataFiles();
            project.getLogger().lifecycle("Removed all temporary auto-generated files!!!");
-
         }catch (Throwable t){
             if (t.getMessage() != null && t.getMessage().contains("/META-INF/BenchmarkList")) {
                project.getLogger().warn("-------------------No benchmark tests found-------------------");
             }
             else {
-                throw new MojoExecutionException("Error during benchmarks run", t);
+                throw new GradleException("Error during benchmarks run", t);
             }
         }
-
         if (!isReportSentSuccessFully && configuration.isShouldSendReportToCyBench() &&  configuration.isShouldFailBuildOnReportDeliveryFailure()){
-            throw new MojoExecutionException("Error during benchmarks run, report was not sent to CyBench as configured!");
+            throw new GradleException("Error during benchmarks run, report was not sent to CyBench as configured!");
         }
        project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
        project.getLogger().lifecycle("         Finished CyBench benchmarking ("+ ComputationUtils.formatInterval(System.currentTimeMillis() - start) +")");
        project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
     }
+    private static void fingerprintAndHashGeneration(Project project, BenchmarkList benchmarkList,  Map<String, String> generatedFingerprints,  Map<String, String> manualFingerprints,  Map<String, String> classFingerprints){
+        SourceSet sourceSets = project.getConvention().getPlugin(JavaPluginConvention.class).getSourceSets().getAt("main");
+        FileCollection test = sourceSets.getRuntimeClasspath();
+        List<URL> urls = new ArrayList<URL>();
+        for(File name : test){
+            try {
+                URL url = name.toURI().toURL();
+                urls.add(url);
+            }catch (MalformedURLException ex){
+                project.getLogger().error("Class not found in the classpath for execution", ex);
+            }
+        }
+        project.getLogger().lifecycle("------------------------------------------------------------------------------------");
+        Set<BenchmarkListEntry> all = benchmarkList.getAll(new JMHUtils.SilentOutputFormat(), Collections.EMPTY_LIST);
+        List<String> benchmarkNames = all.stream().map(BenchmarkListEntry::getUserClassQName).collect(Collectors.toList());
+        URL[] urlsArray = urls.toArray(new URL[0]);
+        try(URLClassLoader cl = new URLClassLoader(urlsArray)){
+            for (String benchmarkClass : benchmarkNames) {
+                Class<?> cls = cl.loadClass(benchmarkClass);
+                JavaClass javaClass = Repository.lookupClass(cls);
+                Class benchmarkAnnotationClass = cl.loadClass("org.openjdk.jmh.annotations.Benchmark");
+                List<String> benchmarkMethods = new ArrayList<>();
+                for (java.lang.reflect.Method method1 : cls.getMethods()) {
+                    if (method1.getAnnotation(benchmarkAnnotationClass) != null) {
+                        String name = method1.getName();
+                        benchmarkMethods.add(name);
+                    }
+                }
+                for (Method method : javaClass.getMethods()) {
+                    try {
+                        if (benchmarkMethods.contains(method.getName())) {
+                            String hash = hashByteArray(concatArrays(method.getName().getBytes(), method.getSignature().getBytes() ,  method.getCode().getCode()));
+                            generatedFingerprints.put(cls.getName() + "." +method.getName(), hash);
+                        }
+                    } catch (Exception e) {
+                        project.getLogger().lifecycle("Failed to compute hash for method {} in class {}", method.getName(),cls, e);
+                    }
+                }
+                SecurityUtils.generateMethodFingerprints(cls, manualFingerprints, classFingerprints);
+            }
+        } catch(Exception exc){
+            project.getLogger().error("Class not found in the classpath for execution", exc);
+        }
+    }
+    protected static byte[] concatArrays(byte[] ... bytes) {
+        String collect = Arrays.stream(bytes).map(String::new).collect(Collectors.joining());
+        return collect.getBytes();
+    }
+    private static String hashByteArray(byte[] classBytes) throws Exception {
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        md.reset();
+        byte[] digested = md.digest(classBytes);
+        StringBuffer sb = new StringBuffer();
+        for (byte b : digested) {
+            sb.append(Integer.toHexString(0xff & b));
+        }
+        return sb.toString();
+    }
+
+
     public void cybenchJMHReflectiveTask(Project project, SourceSet sourceSets, LauncherConfiguration configuration) {
         StringBuilder classpath = new StringBuilder();
         String buildPath = String.valueOf(project.getBuildDir());
@@ -239,14 +298,12 @@ public class Launcher implements Plugin<Project> {
         FileCollection test = sourceSets.getRuntimeClasspath();
         classpath.append(test.getAsPath()).append(";").append(testBuildPath);
 
-//        project.getLogger().lifecycle("classpath.toString(): "+classpath.toString());
-
         System.setProperty("java.class.path",classpath.toString());
         project.task("cybenchRun").doLast( task -> {
             if(!configuration.isSkip() && System.getProperty("skipCybench") == null ) {
                 try {
                     execute(buildPath, configuration, project);
-                } catch (MojoExecutionException e) {
+                } catch (GradleException e) {
                     e.printStackTrace();
                 }
             }else {
