@@ -19,10 +19,10 @@
 
 package com.gocypher.cybench;
 
+import com.gocypher.cybench.core.annotation.BenchmarkTag;
 import com.gocypher.cybench.core.utils.IOUtils;
 import com.gocypher.cybench.core.utils.JMHUtils;
 import com.gocypher.cybench.core.utils.JSONUtils;
-import com.gocypher.cybench.core.utils.SecurityUtils;
 import com.gocypher.cybench.launcher.environment.model.HardwareProperties;
 import com.gocypher.cybench.launcher.environment.model.JVMProperties;
 import com.gocypher.cybench.launcher.environment.services.CollectSystemInformation;
@@ -37,12 +37,16 @@ import com.gocypher.cybench.utils.LauncherConfiguration;
 import com.sun.org.apache.bcel.internal.Repository;
 import com.sun.org.apache.bcel.internal.classfile.JavaClass;
 import com.sun.org.apache.bcel.internal.classfile.Method;
+import org.apache.commons.lang3.StringUtils;
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
+import org.gradle.jvm.Classpath;
+import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.profile.GCProfiler;
 import org.openjdk.jmh.profile.HotspotRuntimeProfiler;
 import org.openjdk.jmh.profile.HotspotThreadProfiler;
@@ -56,7 +60,11 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
@@ -64,6 +72,8 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.MessageDigest;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Launcher implements Plugin<Project> {
@@ -78,6 +88,11 @@ public class Launcher implements Plugin<Project> {
     public void apply(Project project) {
         LauncherConfiguration configuration = project.getExtensions().create("cybenchJMH", LauncherConfiguration.class);
         SourceSet sourceSets = project.getConvention().getPlugin(JavaPluginConvention.class).getSourceSets().getAt("main");
+//        ConfigurableFileCollection classpath = project.files();
+//        project
+//                .getTasksByName("compileJava", true)
+//                .forEach(task -> classpath = Classpath.plus(((JavaCompile)task).getClasspath()));
+//        classpath = Classpath.plus(project.getTasks().getByName("jar").getOutputs().getFiles());
         try {
             cybenchJMHReflectiveTask(project,sourceSets, configuration);
             project.getTasks().getByName("testClasses").finalizedBy("cybenchRun");
@@ -237,6 +252,8 @@ public class Launcher implements Plugin<Project> {
         List<URL> urls = new ArrayList<URL>();
         for(File name : test){
             try {
+
+                project.getLogger().lifecycle("Dependency Class loader: "+name);
                 URL url = name.toURI().toURL();
                 urls.add(url);
             }catch (MalformedURLException ex){
@@ -266,10 +283,26 @@ public class Launcher implements Plugin<Project> {
                             generatedFingerprints.put(cls.getName() + "." +method.getName(), hash);
                         }
                     } catch (Exception e) {
-                        project.getLogger().lifecycle("Failed to compute hash for method {} in class {}", method.getName(),cls, e);
+                        project.getLogger().error("Failed to compute hash for method {} in class {}", method.getName(),cls, e);
                     }
                 }
-                SecurityUtils.generateMethodFingerprints(cls, manualFingerprints, classFingerprints);
+                String classHash = computeClassHash(cls, project);
+                java.lang.reflect.Method[] methods = cls.getMethods();
+                for (java.lang.reflect.Method method : methods) {
+                    if (method.getAnnotation(benchmarkAnnotationClass) != null) {
+                        Class benchmarkAnnotationTagClass = cl.loadClass("com.gocypher.cybench.core.annotation.BenchmarkTag");
+                        Annotation annotation = method.getAnnotation(benchmarkAnnotationTagClass);
+                        if (annotation != null) {
+                            String tag = null;
+                            if(annotation.toString().contains("com.gocypher.cybench.core.annotation.BenchmarkTag")) {
+                                String result = StringUtils.substringBetween(annotation.toString(), "(", ")");
+                                tag = result.replace("tag=", "");
+                            }
+                            manualFingerprints.put(cls.getName() + "." + method.getName(), tag);
+                        }
+                    }
+                    classFingerprints.put(cls.getName() + "." + method.getName(), classHash);
+                }
             }
         } catch(Exception exc){
             project.getLogger().error("Class not found in the classpath for execution", exc);
@@ -325,6 +358,36 @@ public class Launcher implements Plugin<Project> {
             }
         }
         return customUserProperties;
+    }
+
+    public static byte[] getObjectBytes(Object obj){
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            ObjectOutputStream out;
+            out = new ObjectOutputStream(bos);
+            out.writeObject(obj);
+            out.flush();
+            return bos.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return  new byte[]{};
+    }
+
+    public static String computeClassHash(Class<?> clazz, Project project) {
+        if (clazz != null) {
+            try {
+                byte[] classBytes = getObjectBytes(clazz);
+                String classMD5Hash = hashByteArray(classBytes);
+                return classMD5Hash;
+            } catch (Exception e) {
+                project.getLogger().lifecycle("Failed to compute hash for class {}", clazz, e);
+            }
+        }
+        return null;
+    }
+
+    public static void generateMethodFingerprints(Class<?> benchmarkClass, Map<String, String> manualFingerprints, Map<String, String> classFingerprints) {
+
     }
 
     private void UpdateFieldViaReflection(Object target, String fieldName, Class<?> classObject, Object value) {
