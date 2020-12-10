@@ -24,7 +24,7 @@ buildscript {
         }
     }
 }
-apply plugin: 'cybench-launcher'
+apply plugin: 'gocypher-cybench-launch-gradle-plugin'
 ```
 
 **Prerequisites**
@@ -74,7 +74,7 @@ buildscript {
     }
 }
 /* below the dependencies tag inside the build.gradle */
-apply plugin: 'cybench-launcher'
+apply plugin: 'gocypher-cybench-launch-gradle-plugin'
 
 /* Configuration properties that could be provided to the plugin */
 cybenchJMH{
@@ -105,9 +105,9 @@ cybenchJMH{
 
 ### Install CyBench Gradle plugin binaries
 
-* Extract the content of the zip to your local filesystem.
+* Extract the content of the zip to your local filesystem. 
 
-* Install CyBench Gradle plugin binaries to local Maven repository using command:
+* Install CyBench Gradle plugin binaries to local Maven repository using command from the folder where you extracted the binaries to:
 
 ```sh
 mvn install:install-file -Dfile=gocypher-cybench-launch-gradle-plugin-1.0.0.jar -DgroupId=com.gocypher.cybench -DartifactId=gocypher-cybench-launch-gradle-plugin -Dversion=1.0.0 -Dpackaging=jar
@@ -116,6 +116,24 @@ mvn install:install-file -Dfile=gocypher-cybench-launch-gradle-plugin-1.0.0.jar 
 
 Include dependency to CyBench Gradle plugin in your project `build.gradle` file as described [The chapters above](#cybench-gradle-plugin-integration-and-usage) and start using it.
 
+#### Optional: gocypher-cybench-annotation For adding custom benchmark annotations @BenchmarkTag
+
+Install annotation binaries into your local maven repository
+
+```sh
+mvn install:install-file -Dfile=gocypher-cybench-annotations-1.0.0.jar -DgroupId=com.gocypher.cybench.client -DartifactId=gocypher-cybench-annotations -Dversion=1.0.0 -Dpackaging=jar
+```
+
+Include dependency to annotation processor in your project `build.gradle` file. 
+
+```build.gradle
+ compile 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.0.0'
+```
+**Notice:** if you want for the tags to be auto generated on your projects you should add annotationProcessor or testAnnotationProcessor. First launch will generate the annotations for benchmarks and fail build.
+```build.gradle
+ annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.0.0'
+ testAnnotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.0.0'
+```
 
 ## CyBench Gradle Plugin Building
 
@@ -139,3 +157,4 @@ This step is required in order to use CyBench Gradle plugin if you want to build
      gradle clean build install
 ```
 <b>Notice:</b> After successful run project JAR's are installed to local Maven repository.
+

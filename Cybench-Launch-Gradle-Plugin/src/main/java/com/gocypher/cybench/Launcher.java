@@ -252,13 +252,19 @@ public class Launcher implements Plugin<Project> {
         List<URL> urls = new ArrayList<URL>();
         for(File name : test){
             try {
-
 //                project.getLogger().lifecycle("Dependency Class loader: "+name);
                 URL url = name.toURI().toURL();
                 urls.add(url);
             }catch (MalformedURLException ex){
                 project.getLogger().error("Class not found in the classpath for execution", ex);
             }
+        }
+        try {
+            File testSourceRoot = new File(project.getBuildDir() + TEST_SOURCE_ROOT);
+            URL url = testSourceRoot.toURI().toURL();
+            urls.add(url);
+        }catch (MalformedURLException ex){
+            project.getLogger().error("Class not found in the classpath for execution {} - {}",project.getBuildDir() + TEST_SOURCE_ROOT, ex);
         }
         project.getLogger().lifecycle("------------------------------------------------------------------------------------");
         Set<BenchmarkListEntry> all = benchmarkList.getAll(new JMHUtils.SilentOutputFormat(), Collections.EMPTY_LIST);
