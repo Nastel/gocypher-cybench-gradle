@@ -201,7 +201,6 @@ public class Launcher implements Plugin<Project> {
            project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
            project.getLogger().lifecycle("      Report score - "+report.getTotalScore());
            project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
-            String reportJSON = JSONUtils.marshalToPrettyJson(report);
             if (configuration.getExpectedScore() > 0 ) {
                 if (report.getTotalScore().doubleValue() < configuration.getExpectedScore()) {
                     throw new GradleException("CyBench score is less than expected:" + report.getTotalScore().doubleValue() + " < "+configuration.getExpectedScore());
@@ -211,8 +210,6 @@ public class Launcher implements Plugin<Project> {
             String responseWithUrl;
             if (report.isEligibleForStoringExternally() && configuration.isShouldSendReportToCyBench()) {
                 responseWithUrl = DeliveryService.getInstance().sendReportForStoring(reportEncrypted);
-                project.getLogger().lifecycle("responseWithUrl: "+ responseWithUrl);
-                project.getLogger().lifecycle(" report.getClass().getClassLoader(): "+ report.getClass().getClassLoader());
                 report.setReportURL(responseWithUrl);
                 if (responseWithUrl != null && !responseWithUrl.isEmpty()){
                     isReportSentSuccessFully = true ;
@@ -220,8 +217,8 @@ public class Launcher implements Plugin<Project> {
             } else {
                project.getLogger().lifecycle("You may submit your report '"+ IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE)+"' manually at "+ Constants.CYB_UPLOAD_URL);
             }
+            String reportJSON = JSONUtils.marshalToPrettyJson(report);
             project.getLogger().lifecycle(reportJSON) ;
-            project.getLogger().lifecycle("isReportSentSuccessFully: "+ isReportSentSuccessFully);
             if (configuration.isShouldStoreReportToFileSystem()) {
                 project.getLogger().lifecycle("Saving test results to '" + IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils.createFileNameForReport(configuration.getReportName(),start,report.getTotalScore(),false)) + "'");
                 IOUtils.storeResultsToFile(IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils.createFileNameForReport(configuration.getReportName(),start,report.getTotalScore(),false)), reportJSON);
