@@ -20,7 +20,7 @@ buildscript {
     repositories {
         mavenLocal()
         dependencies {
-            classpath 'com.gocypher.cybench:gocypher-cybench-gradle:0.0.1'
+            classpath 'com.gocypher.cybench:gocypher-cybench-launch-gradle-plugin:1.0.0'
         }
     }
 }
@@ -58,6 +58,7 @@ Plugin is configurable inside plugin configuration tags. Properties available fo
 | **reportName**| Name of the benchmark report. |   CyBench Report  |
 | **userProperties**| User defined properties which will be added to benchmarks report section `environmentSettings->userDefinedProperties` as key/value strings. Configuration pattern:`<key1>:<value1>;<key2>:<value2>`. Example which adds a project name:`project=My Test Project;` |   -  |
 | **skip**| A flag which allows to skip benchmarks execution during build process. Benchmarks execution also can be skipped via JVM system property `-DskipCybench`. |   false  |
+| **useCyBenchBenchmarkSettings**| Set if the CyBench provided or JMH default benchmarks settings should be used | true |
 | **shouldFailBuildOnReportDeliveryFailure**| A flag which triggers build failure if the benchmark report was configured to be sent to CyBench but its delivery failed. |   false 
 
 ## Example of Full CyBench Gradle plugin configuration
@@ -68,7 +69,7 @@ buildscript {
     repositories {
         mavenLocal()
         dependencies {
-            classpath 'com.gocypher.cybench:gocypher-cybench-gradle:0.0.1'
+            classpath 'com.gocypher.cybench:gocypher-cybench-launch-gradle-plugin:1.0.0'
         }
     }
 }
@@ -90,6 +91,7 @@ cybenchJMH{
     reportsFolder = './reports/'
     reportName = 'My First Benchmark'
     userProperties ='project=My Benchmarks Project;'
+    useCyBenchBenchmarkSettings = true
     skip = false
 }
 ```
@@ -108,7 +110,7 @@ cybenchJMH{
 * Install CyBench Gradle plugin binaries to local Maven repository using command:
 
 ```sh
-mvn install:install-file -Dfile=gocypher-cybench-launch-gradle-plugin-0.0.1.jar -DgroupId=com.gocypher.cybench -DartifactId=gocypher-cybench-gradle -Dversion=0.0.1 -Dpackaging=jar
+mvn install:install-file -Dfile=gocypher-cybench-launch-gradle-plugin-1.0.0.jar -DgroupId=com.gocypher.cybench -DartifactId=gocypher-cybench-launch-gradle-plugin -Dversion=1.0.0 -Dpackaging=jar
 ```
 ### Start using CyBench Gradle plugin
 

@@ -253,7 +253,7 @@ public class Launcher implements Plugin<Project> {
         for(File name : test){
             try {
 
-                project.getLogger().lifecycle("Dependency Class loader: "+name);
+//                project.getLogger().lifecycle("Dependency Class loader: "+name);
                 URL url = name.toURI().toURL();
                 urls.add(url);
             }catch (MalformedURLException ex){

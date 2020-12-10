@@ -16,7 +16,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
-import com.github.jengelman.gradle.plugins.shadow.tasks.ConfigureShadowRelocation
 
 plugins {
     id 'com.github.johnrengelman.shadow' version '6.1.0'
@@ -57,7 +56,7 @@ dependencies {
 gradlePlugin {
     plugins {
         multiplePlugin{
-            id = 'cybench-launcher'
+            id = 'gocypher-cybench-launch-gradle-plugin'
             implementationClass = 'com.gocypher.cybench.Launcher'
         }
     }
