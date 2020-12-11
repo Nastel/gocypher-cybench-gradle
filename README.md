@@ -12,16 +12,15 @@ As CyBench report contains total score, it is possible to configure build failur
 
 [Releases page](https://github.com/K2NIO/gocypher-cybench-gradle/releases) contains CyBench Gradle plugin shadowed with its dependencies (in a jar shape), which are possible to install to local Maven repository and start using it from any Gradle project immediately.
 
-**Prerequisites:**  Maven command line tools on a local machine.
-
 ### Install CyBench Gradle plugin binaries
+**Prerequisites:**  Maven command line tools on a local machine.
 * Extract the content of the zip to your local filesystem. 
 * Run the command using CMD from the folder where you extracted the binaries to:
 ```sh
 mvn install:install-file -Dfile=gocypher-cybench-launch-gradle-plugin-1.0.0.jar -DgroupId=com.gocypher.cybench -DartifactId=gocypher-cybench-launch-gradle-plugin -Dversion=1.0.0 -Dpackaging=jar
 ```
 
-#### Start using CyBench Gradle plugin
+### Start using CyBench Gradle plugin
 Include dependency to CyBench Gradle plugin in your project `build.gradle` file as described in [the chapters below](#cybench-gradle-plugin-integration-and-usage) and start using it.
 
 #### Optional: gocypher-cybench-annotation For adding custom benchmark annotations @BenchmarkTag
