@@ -67,7 +67,7 @@ apply plugin: 'gocypher-cybench-launch-gradle-plugin'
 
 ##Configuration
 
-Plugin is configurable inside plugin configuration tags. Properties available for plugin behaviour configuration:
+Plugin is configurable inside cybenchJMH{} tag. Properties available for plugin behaviour configuration:
 
 | Property name        | Description           | Default value  |
 | ------------- |-------------| -----:|
