@@ -20,6 +20,7 @@
 package com.gocypher.cybench;
 
 import com.gocypher.cybench.core.utils.IOUtils;
+import com.gocypher.cybench.core.utils.JMHUtils;
 import com.gocypher.cybench.core.utils.JSONUtils;
 import com.gocypher.cybench.launcher.environment.model.HardwareProperties;
 import com.gocypher.cybench.launcher.environment.model.JVMProperties;
@@ -53,14 +54,13 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Launcher implements Plugin<Project> {
-
 
 
     @Override
@@ -165,7 +165,7 @@ public class Launcher implements Plugin<Project> {
             PluginUtils.UpdateFieldViaReflection(runner, "list", runner.getClass(), benchmarkList);
             PluginUtils.UpdateFieldViaReflection(compilerHints, "defaultList", CompilerHints.class, compilerHints);
 
-
+            System.setProperty("checkScoreAnnotation", "false");
             Map<String, String> generatedFingerprints = new HashMap<>();
             Map<String, String> manualFingerprints = new HashMap<>();
             Map<String, String> classFingerprints = new HashMap<>();
@@ -180,7 +180,7 @@ public class Launcher implements Plugin<Project> {
             report.getEnvironmentSettings().put("unclassifiedProperties", CollectSystemInformation.getUnclassifiedProperties());
             report.getEnvironmentSettings().put("userDefinedProperties", PluginUtils.customUserDefinedProperties(configuration.getUserProperties()));
             report.setBenchmarkSettings(benchmarkSettings);
-
+            URL[] urlsArray = PluginUtils.getUrlsArray(project);
             for (String s : report.getBenchmarks().keySet()) {
                 List<BenchmarkReport> custom = report.getBenchmarks().get(s).stream().collect(Collectors.toList());
                 custom.stream().forEach(benchmarkReport -> {
@@ -188,13 +188,30 @@ public class Launcher implements Plugin<Project> {
                     benchmarkReport.setClassFingerprint(classFingerprints.get(name));
                     benchmarkReport.setGeneratedFingerprint(generatedFingerprints.get(name));
                     benchmarkReport.setManualFingerprint(manualFingerprints.get(name));
-
+                    try(URLClassLoader cl = new URLClassLoader(urlsArray)){
+                        JMHUtils.ClassAndMethod classAndMethod = new JMHUtils.ClassAndMethod(name).invoke();
+                        String clazz = classAndMethod.getClazz();
+                        String method = classAndMethod.getMethod();
+                        Class<?> aClass = cl.loadClass(clazz);
+                        Optional<Method> benchmarkMethod = JMHUtils.getBenchmarkMethod(method, aClass);
+                        PluginUtils.appendMetadataFromMethod(benchmarkMethod, benchmarkReport, project, cl);
+                        PluginUtils.appendMetadataFromClass(aClass, benchmarkReport, project, cl);
+                    }catch(Exception exc){
+                            project.getLogger().error("Class not found in the classpath for execution", exc);
+                        }
                 });
             }
+            List<BenchmarkReport> customBenchmarksCategoryCheck = report.getBenchmarks().get("CUSTOM");
+            report.getBenchmarks().remove("CUSTOM");
+            for(BenchmarkReport benchReport : customBenchmarksCategoryCheck) {
+                report.addToBenchmarks(benchReport);
+            }
+            report.computeScores();
+            PluginUtils.getReportUploadStatus(report);
 
-           project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
-           project.getLogger().lifecycle("      Report score - "+report.getTotalScore());
-           project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
+            project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
+            project.getLogger().lifecycle("      Report score - "+report.getTotalScore());
+            project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
             if (configuration.getExpectedScore() > 0 ) {
                 if (report.getTotalScore().doubleValue() < configuration.getExpectedScore()) {
                     throw new GradleException("CyBench score is less than expected:" + report.getTotalScore().doubleValue() + " < "+configuration.getExpectedScore());
@@ -238,4 +255,6 @@ public class Launcher implements Plugin<Project> {
        project.getLogger().lifecycle("         Finished CyBench benchmarking ("+ ComputationUtils.formatInterval(System.currentTimeMillis() - start) +")");
        project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
     }
+
+
 }

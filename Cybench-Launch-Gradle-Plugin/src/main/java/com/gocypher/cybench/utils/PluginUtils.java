@@ -1,6 +1,11 @@
 package com.gocypher.cybench.utils;
 
+import com.gocypher.cybench.core.annotation.BenchmarkMetaData;
+import com.gocypher.cybench.core.annotation.CyBenchMetadataList;
 import com.gocypher.cybench.core.utils.JMHUtils;
+import com.gocypher.cybench.launcher.model.BenchmarkOverviewReport;
+import com.gocypher.cybench.launcher.model.BenchmarkReport;
+import com.gocypher.cybench.launcher.utils.Constants;
 import com.sun.org.apache.bcel.internal.Repository;
 import com.sun.org.apache.bcel.internal.classfile.JavaClass;
 import com.sun.org.apache.bcel.internal.classfile.Method;
@@ -28,6 +33,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class PluginUtils {
+    static Properties cfg = new Properties();
+    private static final String BENCHMARK_METADATA_NAME = "@com.gocypher.cybench.core.annotation.BenchmarkMetaData";
 
     public static String checkReportSaveLocation(String fileName){
         if(!fileName.endsWith("/")){
@@ -36,29 +43,9 @@ public class PluginUtils {
         return fileName;
     }
     public static void fingerprintAndHashGeneration(Project project, BenchmarkList benchmarkList, Map<String, String> generatedFingerprints, Map<String, String> manualFingerprints, Map<String, String> classFingerprints){
-        SourceSet sourceSets = project.getConvention().getPlugin(JavaPluginConvention.class).getSourceSets().getAt("main");
-        FileCollection test = sourceSets.getRuntimeClasspath();
-        List<URL> urls = new ArrayList<URL>();
-        for(File name : test){
-            try {
-//                project.getLogger().lifecycle("Dependency Class loader: "+name);
-                URL url = name.toURI().toURL();
-                urls.add(url);
-            }catch (MalformedURLException ex){
-                project.getLogger().error("Class not found in the classpath for execution", ex);
-            }
-        }
-        try {
-            File testSourceRoot = new File(project.getBuildDir() + PluginConstants.TEST_SOURCE_ROOT);
-            URL url = testSourceRoot.toURI().toURL();
-            urls.add(url);
-        }catch (MalformedURLException ex){
-            project.getLogger().error("Class not found in the classpath for execution {} - {}",project.getBuildDir() + PluginConstants.TEST_SOURCE_ROOT, ex);
-        }
-        project.getLogger().lifecycle("------------------------------------------------------------------------------------");
         Set<BenchmarkListEntry> all = benchmarkList.getAll(new JMHUtils.SilentOutputFormat(), Collections.EMPTY_LIST);
         List<String> benchmarkNames = all.stream().map(BenchmarkListEntry::getUserClassQName).collect(Collectors.toList());
-        URL[] urlsArray = urls.toArray(new URL[0]);
+        URL[] urlsArray = getUrlsArray(project);
         try(URLClassLoader cl = new URLClassLoader(urlsArray)){
             for (String benchmarkClass : benchmarkNames) {
                 Class<?> cls = cl.loadClass(benchmarkClass);
@@ -103,6 +90,29 @@ public class PluginUtils {
             project.getLogger().error("Class not found in the classpath for execution", exc);
         }
     }
+    public static URL[] getUrlsArray(Project project){
+        SourceSet sourceSets = project.getConvention().getPlugin(JavaPluginConvention.class).getSourceSets().getAt("main");
+        FileCollection test = sourceSets.getRuntimeClasspath();
+        List<URL> urls = new ArrayList<>();
+        for(File name : test){
+            try {
+                URL url = name.toURI().toURL();
+                urls.add(url);
+            }catch (MalformedURLException ex){
+                project.getLogger().error("Class not found in the classpath for execution", ex);
+            }
+        }
+        try {
+            File testSourceRoot = new File(project.getBuildDir() + PluginConstants.TEST_SOURCE_ROOT);
+            URL url = testSourceRoot.toURI().toURL();
+            urls.add(url);
+        }catch (MalformedURLException ex){
+            project.getLogger().error("Class not found in the classpath for execution {} - {}",project.getBuildDir() + PluginConstants.TEST_SOURCE_ROOT, ex);
+        }
+        project.getLogger().lifecycle("------------------------------------------------------------------------------------");
+        return  urls.toArray(new URL[0]);
+    }
+
     public static byte[] concatArrays(byte[] ... bytes) {
         String collect = Arrays.stream(bytes).map(String::new).collect(Collectors.joining());
         return collect.getBytes();
@@ -180,6 +190,86 @@ public class PluginUtils {
         Field modifiersField = Field.class.getDeclaredField("modifiers");
         modifiersField.setAccessible(true);
         modifiersField.setInt(listField, listField.getModifiers() & ~Modifier.FINAL);
+    }
+    public static void appendMetadataFromClass(Class<?> aClass, BenchmarkReport benchmarkReport, Project project, URLClassLoader cl) {
+        try {
+            Class<?> cyBenchMetadataList = cl.loadClass("com.gocypher.cybench.core.annotation.CyBenchMetadataList");
+            Class<?> benchmarkMetaData = cl.loadClass("com.gocypher.cybench.core.annotation.BenchmarkMetaData");
+            Annotation[] annotation = aClass.getDeclaredAnnotations();
+            for (Annotation ann : annotation) {
+                if (cyBenchMetadataList.equals(ann.annotationType())) {
+                    parseCyBenchArrayMetadata(ann.toString(), project, benchmarkReport);
+                }
+                if (benchmarkMetaData.equals(ann.annotationType())) {
+                    String[] test  = ann.toString().split(BENCHMARK_METADATA_NAME, -1);
+                    parseCyBenchMetadata(ann.toString().split(BENCHMARK_METADATA_NAME, -1),project, benchmarkReport);
+                }
+            }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+        public static void appendMetadataFromMethod(Optional<java.lang.reflect.Method> benchmarkMethod, BenchmarkReport benchmarkReport, Project project, URLClassLoader cl) {
+        try {
+            Class<?> cyBenchMetadataList = cl.loadClass("com.gocypher.cybench.core.annotation.CyBenchMetadataList");
+            Class<?> benchmarkMetaData = cl.loadClass("com.gocypher.cybench.core.annotation.BenchmarkMetaData");
+            if (benchmarkMethod.isPresent()) {
+                Annotation[] annotation = benchmarkMethod.get().getDeclaredAnnotations();
+                for (Annotation ann : annotation) {
+                    if (cyBenchMetadataList.equals(ann.annotationType())) {
+                        parseCyBenchArrayMetadata(ann.toString(), project, benchmarkReport);
+                    }
+                    if (benchmarkMetaData.equals(ann.annotationType())) {
+                        parseCyBenchMetadata(ann.toString().split(BENCHMARK_METADATA_NAME, -1),project, benchmarkReport);
+                    }
+                }
+            }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void parseCyBenchArrayMetadata(String annotation, Project project, BenchmarkReport benchmarkReport){
+        String result = StringUtils.substringBetween(annotation, "[", "]");
+        String[] metadataProps = result.split(BENCHMARK_METADATA_NAME, -1);
+        parseCyBenchMetadata(metadataProps, project, benchmarkReport);
+    }
+
+    private static void parseCyBenchMetadata(String[] metadataProps, Project project, BenchmarkReport benchmarkReport){
+        for(String prop : metadataProps){
+            String key = StringUtils.substringBetween(prop, "key=", ",");
+            String value = StringUtils.substringBetween(prop, "value=", ")");
+            if(key != null && value != null) {
+                checkSetOldMetadataProps(key, value, benchmarkReport);
+                benchmarkReport.addMetadata(key, value);
+            }
+        }
+    }
+    private static void checkSetOldMetadataProps(String key,String value, BenchmarkReport benchmarkReport){
+        if(key.equals("api")){
+            benchmarkReport.setCategory(value);
+        }
+        if(key.equals("context")){
+            benchmarkReport.setContext(value);
+        }
+        if(key.equals("version")){
+            benchmarkReport.setVersion(value);
+        }
+    }
+    public static void getReportUploadStatus(BenchmarkOverviewReport report) {
+        String reportUploadStatus = getProperty(Constants.REPORT_UPLOAD_STATUS);
+        if (Constants.REPORT_PUBLIC.equals(reportUploadStatus)) {
+            report.setUploadStatus(reportUploadStatus);
+        } else if (Constants.REPORT_PRIVATE.equals(reportUploadStatus)) {
+            report.setUploadStatus(reportUploadStatus);
+        } else {
+            report.setUploadStatus(Constants.REPORT_PUBLIC);
+        }
+    }
+
+    public static String getProperty(String key) {
+        return System.getProperty(key, cfg.getProperty(key));
     }
 
 

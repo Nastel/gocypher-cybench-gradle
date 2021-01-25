@@ -45,6 +45,7 @@ dependencies {
     compile group: 'com.github.oshi', name:'oshi-core', version:'5.2.5'
     compile group: 'org.jhardware', name:'jHardware', version:'0.8.6'
     compile group: 'com.gocypher.cybench.client', name:'gocypher-cybench-runner', version:'1.0.0'
+    compile group: 'com.gocypher.cybench.client', name:'gocypher-cybench-annotations', version:'1.0.0'
 
     implementation group: 'org.openjdk.jmh', name: 'jmh-core', version: '1.26'
     annotationProcessor  group: 'org.openjdk.jmh', name:'jmh-generator-annprocess', version:'1.26'
