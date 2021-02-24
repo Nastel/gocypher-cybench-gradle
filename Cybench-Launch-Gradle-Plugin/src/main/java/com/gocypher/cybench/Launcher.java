@@ -57,6 +57,7 @@ import java.io.File;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -66,15 +67,19 @@ public class Launcher implements Plugin<Project> {
     @Override
     public void apply(Project project) {
         LauncherConfiguration configuration = project.getExtensions().create("cybenchJMH", LauncherConfiguration.class);
+        if (configuration.getReportName() == LauncherConfiguration.DEFAULT_NAME) {
+            configuration.setReportName(MessageFormat.format("Benchmark for {0}:{1}:{2}", project.getGroup(), project.getName(), project.getVersion()));
+        }
         SourceSet sourceSets = project.getConvention().getPlugin(JavaPluginConvention.class).getSourceSets().getAt("main");
 
         try {
-            cybenchJMHReflectiveTask(project,sourceSets, configuration);
+            cybenchJMHReflectiveTask(project, sourceSets, configuration);
             project.getTasks().getByName("testClasses").finalizedBy("cybenchRun");
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
     public void cybenchJMHReflectiveTask(Project project, SourceSet sourceSets, LauncherConfiguration configuration) {
         StringBuilder classpath = new StringBuilder();
         String buildPath = String.valueOf(project.getBuildDir());
@@ -82,26 +87,27 @@ public class Launcher implements Plugin<Project> {
         FileCollection test = sourceSets.getRuntimeClasspath();
         classpath.append(test.getAsPath()).append(";").append(testBuildPath);
 
-        System.setProperty("java.class.path",classpath.toString());
-        project.task("cybenchRun").doLast( task -> {
-            if(!configuration.isSkip() && System.getProperty("skipCybench") == null ) {
+        System.setProperty("java.class.path", classpath.toString());
+        project.task("cybenchRun").doLast(task -> {
+            if (!configuration.isSkip() && System.getProperty("skipCybench") == null) {
                 try {
                     execute(buildPath, configuration, project);
                 } catch (GradleException e) {
                     e.printStackTrace();
                 }
-            }else {
+            } else {
                 project.getLogger().lifecycle("Skipping CyBench execution");
             }
         });
     }
-    public void execute(String buildPath,  LauncherConfiguration configuration, Project project) throws GradleException {
+
+    public void execute(String buildPath, LauncherConfiguration configuration, Project project) throws GradleException {
         long start = System.currentTimeMillis();
         project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
         project.getLogger().lifecycle("                                 Starting CyBench benchmarks                             ");
         project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
         System.setProperty("collectHw", "true");
-        boolean isReportSentSuccessFully = false ;
+        boolean isReportSentSuccessFully = false;
         try {
             project.getLogger().lifecycle("Collecting hardware, software information...");
             HardwareProperties hwProperties = CollectSystemInformation.getEnvironmentProperties();
@@ -113,7 +119,7 @@ public class Launcher implements Plugin<Project> {
             Map<String, Map<String, String>> customBenchmarksMetadata = ComputationUtils.parseBenchmarkMetadata(configuration.getUserProperties());
 
             benchmarkSettings.put("benchSource", PluginConstants.BENCH_SOURCE);
-            benchmarkSettings.put("benchWarmUpIteration",configuration.getWarmUpIterations());
+            benchmarkSettings.put("benchWarmUpIteration", configuration.getWarmUpIterations());
             benchmarkSettings.put("benchWarmUpSeconds", configuration.getWarmUpSeconds());
             benchmarkSettings.put("benchMeasurementIteration", configuration.getMeasurementIterations());
             benchmarkSettings.put("benchMeasurementSeconds", configuration.getMeasurementSeconds());
@@ -122,11 +128,11 @@ public class Launcher implements Plugin<Project> {
             benchmarkSettings.put("benchThreadCount", configuration.getThreads());
             benchmarkSettings.put("benchReportName", configuration.getReportName());
 
-           project.getLogger().lifecycle("Executing benchmarks...");
+            project.getLogger().lifecycle("Executing benchmarks...");
 
             OptionsBuilder optBuild = new OptionsBuilder();
             Options opt;
-            if(configuration.isUseCyBenchBenchmarkSettings()) {
+            if (configuration.isUseCyBenchBenchmarkSettings()) {
                 opt = optBuild
                         .forks(configuration.getForks())
                         .measurementIterations(configuration.getMeasurementIterations())
@@ -141,7 +147,7 @@ public class Launcher implements Plugin<Project> {
                         .addProfiler(SafepointsProfiler.class)
                         .detectJvmArgs()
                         .build();
-            }else{
+            } else {
                 opt = optBuild.shouldDoGC(true)
                         .addProfiler(GCProfiler.class)
                         .addProfiler(HotspotThreadProfiler.class)
@@ -155,12 +161,12 @@ public class Launcher implements Plugin<Project> {
             CompilerHints compilerHints;
             File benchmarkListFile = new File(buildPath + PluginConstants.TEST_SOURCE_ROOT + PluginConstants.BENCHMARK_LIST_FILE);
             File compilerHintFile = new File(buildPath + PluginConstants.TEST_SOURCE_ROOT + PluginConstants.COMPILER_HINT_FILE);
-            if(benchmarkListFile.exists() && compilerHintFile.exists()) {
-                benchmarkList = BenchmarkList.fromFile(buildPath + PluginConstants.TEST_SOURCE_ROOT +  PluginConstants.BENCHMARK_LIST_FILE);
-                compilerHints = CompilerHints.fromFile(buildPath + PluginConstants.TEST_SOURCE_ROOT+  PluginConstants.COMPILER_HINT_FILE);
-            }else{
-                benchmarkList = BenchmarkList.fromFile(buildPath + PluginConstants.MAIN_SOURCE_ROOT +  PluginConstants.BENCHMARK_LIST_FILE);
-                compilerHints = CompilerHints.fromFile(buildPath + PluginConstants.MAIN_SOURCE_ROOT +  PluginConstants.COMPILER_HINT_FILE);
+            if (benchmarkListFile.exists() && compilerHintFile.exists()) {
+                benchmarkList = BenchmarkList.fromFile(buildPath + PluginConstants.TEST_SOURCE_ROOT + PluginConstants.BENCHMARK_LIST_FILE);
+                compilerHints = CompilerHints.fromFile(buildPath + PluginConstants.TEST_SOURCE_ROOT + PluginConstants.COMPILER_HINT_FILE);
+            } else {
+                benchmarkList = BenchmarkList.fromFile(buildPath + PluginConstants.MAIN_SOURCE_ROOT + PluginConstants.BENCHMARK_LIST_FILE);
+                compilerHints = CompilerHints.fromFile(buildPath + PluginConstants.MAIN_SOURCE_ROOT + PluginConstants.COMPILER_HINT_FILE);
             }
             PluginUtils.UpdateFieldViaReflection(runner, "list", runner.getClass(), benchmarkList);
             PluginUtils.UpdateFieldViaReflection(compilerHints, "defaultList", CompilerHints.class, compilerHints);
@@ -188,7 +194,7 @@ public class Launcher implements Plugin<Project> {
                     benchmarkReport.setClassFingerprint(classFingerprints.get(name));
                     benchmarkReport.setGeneratedFingerprint(generatedFingerprints.get(name));
                     benchmarkReport.setManualFingerprint(manualFingerprints.get(name));
-                    try(URLClassLoader cl = new URLClassLoader(urlsArray)){
+                    try (URLClassLoader cl = new URLClassLoader(urlsArray)) {
                         JMHUtils.ClassAndMethod classAndMethod = new JMHUtils.ClassAndMethod(name).invoke();
                         String clazz = classAndMethod.getClazz();
                         String method = classAndMethod.getMethod();
@@ -196,25 +202,25 @@ public class Launcher implements Plugin<Project> {
                         Optional<Method> benchmarkMethod = JMHUtils.getBenchmarkMethod(method, aClass);
                         PluginUtils.appendMetadataFromMethod(benchmarkMethod, benchmarkReport, project, cl);
                         PluginUtils.appendMetadataFromClass(aClass, benchmarkReport, project, cl);
-                    }catch(Exception exc){
-                            project.getLogger().error("Class not found in the classpath for execution", exc);
-                        }
+                    } catch (Exception exc) {
+                        project.getLogger().error("Class not found in the classpath for execution", exc);
+                    }
                 });
             }
             List<BenchmarkReport> customBenchmarksCategoryCheck = report.getBenchmarks().get("CUSTOM");
             report.getBenchmarks().remove("CUSTOM");
-            for(BenchmarkReport benchReport : customBenchmarksCategoryCheck) {
+            for (BenchmarkReport benchReport : customBenchmarksCategoryCheck) {
                 report.addToBenchmarks(benchReport);
             }
             report.computeScores();
             PluginUtils.getReportUploadStatus(report);
 
             project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
-            project.getLogger().lifecycle("      Report score - "+report.getTotalScore());
+            project.getLogger().lifecycle("      Report score - " + report.getTotalScore());
             project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
-            if (configuration.getExpectedScore() > 0 ) {
+            if (configuration.getExpectedScore() > 0) {
                 if (report.getTotalScore().doubleValue() < configuration.getExpectedScore()) {
-                    throw new GradleException("CyBench score is less than expected:" + report.getTotalScore().doubleValue() + " < "+configuration.getExpectedScore());
+                    throw new GradleException("CyBench score is less than expected:" + report.getTotalScore().doubleValue() + " < " + configuration.getExpectedScore());
                 }
             }
             String reportEncrypted = ReportingService.getInstance().prepareReportForDelivery(securityBuilder, report);
@@ -223,37 +229,36 @@ public class Launcher implements Plugin<Project> {
             if (report.isEligibleForStoringExternally() && configuration.isShouldSendReportToCyBench()) {
                 responseWithUrl = DeliveryService.getInstance().sendReportForStoring(reportEncrypted);
                 report.setReportURL(responseWithUrl);
-                if (responseWithUrl != null && !responseWithUrl.isEmpty()){
-                    isReportSentSuccessFully = true ;
+                if (responseWithUrl != null && !responseWithUrl.isEmpty()) {
+                    isReportSentSuccessFully = true;
                 }
             } else {
-               project.getLogger().lifecycle("You may submit your report '"+ IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE)+"' manually at "+ Constants.CYB_UPLOAD_URL);
+                project.getLogger().lifecycle("You may submit your report '" + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE) + "' manually at " + Constants.CYB_UPLOAD_URL);
             }
             String reportJSON = JSONUtils.marshalToPrettyJson(report);
-            project.getLogger().lifecycle(reportJSON) ;
+            project.getLogger().lifecycle(reportJSON);
             if (configuration.isShouldStoreReportToFileSystem()) {
-                project.getLogger().lifecycle("Saving test results to '" + IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils.createFileNameForReport(configuration.getReportName(),start,report.getTotalScore(),false)) + "'");
-                IOUtils.storeResultsToFile(IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils.createFileNameForReport(configuration.getReportName(),start,report.getTotalScore(),false)), reportJSON);
-                project.getLogger().lifecycle("Saving encrypted test results to '" + IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils.createFileNameForReport(configuration.getReportName(),start,report.getTotalScore(),true)) + "'");
-                IOUtils.storeResultsToFile(IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils.createFileNameForReport(configuration.getReportName(),start,report.getTotalScore(),true)), reportEncrypted);
+                project.getLogger().lifecycle("Saving test results to '" + IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils.createFileNameForReport(configuration.getReportName(), start, report.getTotalScore(), false)) + "'");
+                IOUtils.storeResultsToFile(IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils.createFileNameForReport(configuration.getReportName(), start, report.getTotalScore(), false)), reportJSON);
+                project.getLogger().lifecycle("Saving encrypted test results to '" + IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils.createFileNameForReport(configuration.getReportName(), start, report.getTotalScore(), true)) + "'");
+                IOUtils.storeResultsToFile(IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils.createFileNameForReport(configuration.getReportName(), start, report.getTotalScore(), true)), reportEncrypted);
             }
-           project.getLogger().lifecycle("Removing all temporary auto-generated files....");
-           IOUtils.removeTestDataFiles();
-           project.getLogger().lifecycle("Removed all temporary auto-generated files!!!");
-        }catch (Throwable t){
+            project.getLogger().lifecycle("Removing all temporary auto-generated files....");
+            IOUtils.removeTestDataFiles();
+            project.getLogger().lifecycle("Removed all temporary auto-generated files!!!");
+        } catch (Throwable t) {
             if (t.getMessage() != null && t.getMessage().contains("/META-INF/BenchmarkList")) {
-               project.getLogger().warn("-------------------No benchmark tests found-------------------");
-            }
-            else {
+                project.getLogger().warn("-------------------No benchmark tests found-------------------");
+            } else {
                 throw new GradleException("Error during benchmarks run", t);
             }
         }
-        if (!isReportSentSuccessFully && configuration.isShouldSendReportToCyBench() &&  configuration.isShouldFailBuildOnReportDeliveryFailure()){
+        if (!isReportSentSuccessFully && configuration.isShouldSendReportToCyBench() && configuration.isShouldFailBuildOnReportDeliveryFailure()) {
             throw new GradleException("Error during benchmarks run, report was not sent to CyBench as configured!");
         }
-       project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
-       project.getLogger().lifecycle("         Finished CyBench benchmarking ("+ ComputationUtils.formatInterval(System.currentTimeMillis() - start) +")");
-       project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
+        project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
+        project.getLogger().lifecycle("         Finished CyBench benchmarking (" + ComputationUtils.formatInterval(System.currentTimeMillis() - start) + ")");
+        project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
     }
 
 

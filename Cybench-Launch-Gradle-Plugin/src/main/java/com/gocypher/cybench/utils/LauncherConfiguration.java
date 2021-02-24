@@ -20,6 +20,7 @@
 package com.gocypher.cybench.utils;
 
 public class LauncherConfiguration {
+    public static final String DEFAULT_NAME = "CyBench Report";
     private int forks = 1;
     private int threads = 1;
     private int measurementIterations = 1;
@@ -31,7 +32,7 @@ public class LauncherConfiguration {
     private boolean shouldStoreReportToFileSystem = true;
     private String reportUploadStatus = "public";
     private String reportsFolder = "";
-    private String reportName = "CyBench Report";
+    private String reportName = DEFAULT_NAME;
     private String userBenchmarkMetadata = "";
     private String userProperties = "";
 
