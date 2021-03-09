@@ -35,6 +35,7 @@ public class LauncherConfiguration {
     private String reportName = DEFAULT_NAME;
     private String userBenchmarkMetadata = "";
     private String userProperties = "";
+    private String reportUploadToken;
 
     private boolean useCyBenchBenchmarkSettings = true;
     
@@ -176,5 +177,13 @@ public class LauncherConfiguration {
 
     public void setUseCyBenchBenchmarkSettings(boolean useCyBenchBenchmarkSettings) {
         this.useCyBenchBenchmarkSettings = useCyBenchBenchmarkSettings;
+    }
+
+    public String getReportUploadToken() {
+        return reportUploadToken;
+    }
+
+    public void setReportUploadToken(String reportUploadToken) {
+        this.reportUploadToken = reportUploadToken;
     }
 }

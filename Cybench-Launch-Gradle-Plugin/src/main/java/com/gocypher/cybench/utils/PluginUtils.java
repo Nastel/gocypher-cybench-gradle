@@ -1,7 +1,5 @@
 package com.gocypher.cybench.utils;
 
-import com.gocypher.cybench.core.annotation.BenchmarkMetaData;
-import com.gocypher.cybench.core.annotation.CyBenchMetadataList;
 import com.gocypher.cybench.core.utils.JMHUtils;
 import com.gocypher.cybench.launcher.model.BenchmarkOverviewReport;
 import com.gocypher.cybench.launcher.model.BenchmarkReport;
@@ -34,7 +32,10 @@ import java.util.stream.Collectors;
 
 public class PluginUtils {
     static Properties cfg = new Properties();
-    private static final String BENCHMARK_METADATA_NAME = "@com.gocypher.cybench.core.annotation.BenchmarkMetaData";
+
+    private PluginUtils(){
+
+    }
 
     public static String checkReportSaveLocation(String fileName){
         if(!fileName.endsWith("/")){
@@ -171,10 +172,6 @@ public class PluginUtils {
         return null;
     }
 
-    public static void generateMethodFingerprints(Class<?> benchmarkClass, Map<String, String> manualFingerprints, Map<String, String> classFingerprints) {
-
-    }
-
     public static void UpdateFieldViaReflection(Object target, String fieldName, Class<?> classObject, Object value) {
         try {
             Field listField = classObject.getDeclaredField(fieldName);
@@ -193,16 +190,16 @@ public class PluginUtils {
     }
     public static void appendMetadataFromClass(Class<?> aClass, BenchmarkReport benchmarkReport, Project project, URLClassLoader cl) {
         try {
-            Class<?> cyBenchMetadataList = cl.loadClass("com.gocypher.cybench.core.annotation.CyBenchMetadataList");
-            Class<?> benchmarkMetaData = cl.loadClass("com.gocypher.cybench.core.annotation.BenchmarkMetaData");
+            Class<?> cyBenchMetadataList = cl.loadClass(PluginConstants.METADATA_LIST);
+            Class<?> benchmarkMetaData = cl.loadClass(PluginConstants.BENCHMARK_METADATA);
             Annotation[] annotation = aClass.getDeclaredAnnotations();
             for (Annotation ann : annotation) {
                 if (cyBenchMetadataList.equals(ann.annotationType())) {
                     parseCyBenchArrayMetadata(ann.toString(), project, benchmarkReport);
                 }
                 if (benchmarkMetaData.equals(ann.annotationType())) {
-                    String[] test  = ann.toString().split(BENCHMARK_METADATA_NAME, -1);
-                    parseCyBenchMetadata(ann.toString().split(BENCHMARK_METADATA_NAME, -1),project, benchmarkReport);
+                    String[] test  = ann.toString().split(PluginConstants.BENCHMARK_METADATA_NAME, -1);
+                    parseCyBenchMetadata(ann.toString().split(PluginConstants.BENCHMARK_METADATA_NAME, -1),project, benchmarkReport);
                 }
             }
         } catch (ClassNotFoundException e) {
@@ -212,8 +209,8 @@ public class PluginUtils {
 
         public static void appendMetadataFromMethod(Optional<java.lang.reflect.Method> benchmarkMethod, BenchmarkReport benchmarkReport, Project project, URLClassLoader cl) {
         try {
-            Class<?> cyBenchMetadataList = cl.loadClass("com.gocypher.cybench.core.annotation.CyBenchMetadataList");
-            Class<?> benchmarkMetaData = cl.loadClass("com.gocypher.cybench.core.annotation.BenchmarkMetaData");
+            Class<?> cyBenchMetadataList = cl.loadClass(PluginConstants.METADATA_LIST);
+            Class<?> benchmarkMetaData = cl.loadClass(PluginConstants.BENCHMARK_METADATA);
             if (benchmarkMethod.isPresent()) {
                 Annotation[] annotation = benchmarkMethod.get().getDeclaredAnnotations();
                 for (Annotation ann : annotation) {
@@ -221,7 +218,7 @@ public class PluginUtils {
                         parseCyBenchArrayMetadata(ann.toString(), project, benchmarkReport);
                     }
                     if (benchmarkMetaData.equals(ann.annotationType())) {
-                        parseCyBenchMetadata(ann.toString().split(BENCHMARK_METADATA_NAME, -1),project, benchmarkReport);
+                        parseCyBenchMetadata(ann.toString().split(PluginConstants.BENCHMARK_METADATA_NAME, -1),project, benchmarkReport);
                     }
                 }
             }
@@ -232,7 +229,7 @@ public class PluginUtils {
 
     private static void parseCyBenchArrayMetadata(String annotation, Project project, BenchmarkReport benchmarkReport){
         String result = StringUtils.substringBetween(annotation, "[", "]");
-        String[] metadataProps = result.split(BENCHMARK_METADATA_NAME, -1);
+        String[] metadataProps = result.split(PluginConstants.BENCHMARK_METADATA_NAME, -1);
         parseCyBenchMetadata(metadataProps, project, benchmarkReport);
     }
 
