@@ -12,4 +12,6 @@ public class PluginConstants {
     public static final String BENCHMARK_METADATA_NAME = "@com.gocypher.cybench.core.annotation.BenchmarkMetaData";
     public static final String METADATA_LIST = "com.gocypher.cybench.core.annotation.CyBenchMetadataList";
     public static final String BENCHMARK_METADATA = "com.gocypher.cybench.core.annotation.BenchmarkMetaData";
+    public static final String BENCHMARK_TAG = "com.gocypher.cybench.core.annotation.BenchmarkTag";
+
 }

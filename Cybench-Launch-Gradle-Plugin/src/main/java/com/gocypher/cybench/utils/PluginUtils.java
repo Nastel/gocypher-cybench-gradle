@@ -73,15 +73,17 @@ public class PluginUtils {
                 java.lang.reflect.Method[] methods = cls.getMethods();
                 for (java.lang.reflect.Method method : methods) {
                     if (method.getAnnotation(benchmarkAnnotationClass) != null) {
-                        Class benchmarkAnnotationTagClass = cl.loadClass("com.gocypher.cybench.core.annotation.BenchmarkTag");
-                        Annotation annotation = method.getAnnotation(benchmarkAnnotationTagClass);
-                        if (annotation != null) {
-                            String tag = null;
-                            if(annotation.toString().contains("com.gocypher.cybench.core.annotation.BenchmarkTag")) {
-                                String result = StringUtils.substringBetween(annotation.toString(), "(", ")");
-                                tag = result.replace("tag=", "");
+                        if( cl.findResource(PluginConstants.BENCHMARK_TAG) != null) {
+                            Class benchmarkAnnotationTagClass = cl.loadClass(PluginConstants.BENCHMARK_TAG);
+                            Annotation annotation = method.getAnnotation(benchmarkAnnotationTagClass);
+                            if (annotation != null) {
+                                String tag = null;
+                                if (annotation.toString().contains(PluginConstants.BENCHMARK_TAG)) {
+                                    String result = StringUtils.substringBetween(annotation.toString(), "(", ")");
+                                    tag = result.replace("tag=", "");
+                                }
+                                manualFingerprints.put(cls.getName() + "." + method.getName(), tag);
                             }
-                            manualFingerprints.put(cls.getName() + "." + method.getName(), tag);
                         }
                     }
                     classFingerprints.put(cls.getName() + "." + method.getName(), classHash);
@@ -190,16 +192,17 @@ public class PluginUtils {
     }
     public static void appendMetadataFromClass(Class<?> aClass, BenchmarkReport benchmarkReport, Project project, URLClassLoader cl) {
         try {
-            Class<?> cyBenchMetadataList = cl.loadClass(PluginConstants.METADATA_LIST);
-            Class<?> benchmarkMetaData = cl.loadClass(PluginConstants.BENCHMARK_METADATA);
-            Annotation[] annotation = aClass.getDeclaredAnnotations();
-            for (Annotation ann : annotation) {
-                if (cyBenchMetadataList.equals(ann.annotationType())) {
-                    parseCyBenchArrayMetadata(ann.toString(), project, benchmarkReport);
-                }
-                if (benchmarkMetaData.equals(ann.annotationType())) {
-                    String[] test  = ann.toString().split(PluginConstants.BENCHMARK_METADATA_NAME, -1);
-                    parseCyBenchMetadata(ann.toString().split(PluginConstants.BENCHMARK_METADATA_NAME, -1),project, benchmarkReport);
+            if( cl.findResource(PluginConstants.METADATA_LIST) != null) {
+                Class<?> cyBenchMetadataList = cl.loadClass(PluginConstants.METADATA_LIST);
+                Class<?> benchmarkMetaData = cl.loadClass(PluginConstants.BENCHMARK_METADATA);
+                Annotation[] annotation = aClass.getDeclaredAnnotations();
+                for (Annotation ann : annotation) {
+                    if (cyBenchMetadataList.equals(ann.annotationType())) {
+                        parseCyBenchArrayMetadata(ann.toString(), project, benchmarkReport);
+                    }
+                    if (benchmarkMetaData.equals(ann.annotationType())) {
+                        parseCyBenchMetadata(ann.toString().split(PluginConstants.BENCHMARK_METADATA_NAME, -1), project, benchmarkReport);
+                    }
                 }
             }
         } catch (ClassNotFoundException e) {
@@ -209,16 +212,18 @@ public class PluginUtils {
 
         public static void appendMetadataFromMethod(Optional<java.lang.reflect.Method> benchmarkMethod, BenchmarkReport benchmarkReport, Project project, URLClassLoader cl) {
         try {
-            Class<?> cyBenchMetadataList = cl.loadClass(PluginConstants.METADATA_LIST);
-            Class<?> benchmarkMetaData = cl.loadClass(PluginConstants.BENCHMARK_METADATA);
-            if (benchmarkMethod.isPresent()) {
-                Annotation[] annotation = benchmarkMethod.get().getDeclaredAnnotations();
-                for (Annotation ann : annotation) {
-                    if (cyBenchMetadataList.equals(ann.annotationType())) {
-                        parseCyBenchArrayMetadata(ann.toString(), project, benchmarkReport);
-                    }
-                    if (benchmarkMetaData.equals(ann.annotationType())) {
-                        parseCyBenchMetadata(ann.toString().split(PluginConstants.BENCHMARK_METADATA_NAME, -1),project, benchmarkReport);
+            if( cl.findResource(PluginConstants.METADATA_LIST) != null) {
+                Class<?> cyBenchMetadataList = cl.loadClass(PluginConstants.METADATA_LIST);
+                Class<?> benchmarkMetaData = cl.loadClass(PluginConstants.BENCHMARK_METADATA);
+                if (benchmarkMethod.isPresent()) {
+                    Annotation[] annotation = benchmarkMethod.get().getDeclaredAnnotations();
+                    for (Annotation ann : annotation) {
+                        if (cyBenchMetadataList.equals(ann.annotationType())) {
+                            parseCyBenchArrayMetadata(ann.toString(), project, benchmarkReport);
+                        }
+                        if (benchmarkMetaData.equals(ann.annotationType())) {
+                            parseCyBenchMetadata(ann.toString().split(PluginConstants.BENCHMARK_METADATA_NAME, -1), project, benchmarkReport);
+                        }
                     }
                 }
             }
