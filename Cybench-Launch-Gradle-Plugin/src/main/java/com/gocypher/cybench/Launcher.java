@@ -227,7 +227,7 @@ public class Launcher implements Plugin<Project> {
             String responseWithUrl;
             configuration.setReportsFolder(PluginUtils.checkReportSaveLocation(configuration.getReportsFolder()));
             if (report.isEligibleForStoringExternally() && configuration.isShouldSendReportToCyBench()) {
-                responseWithUrl = DeliveryService.getInstance().sendReportForStoring(reportEncrypted, configuration.getReportUploadToken());
+                responseWithUrl = DeliveryService.getInstance().sendReportForStoring(reportEncrypted, configuration.getBenchAccessToken());
 
                 String deviceReports = JSONUtils.parseJsonIntoMap(responseWithUrl).get(Constants.REPORT_USER_URL).toString();
                 String resultURL = JSONUtils.parseJsonIntoMap(responseWithUrl).get(Constants.REPORT_URL).toString();

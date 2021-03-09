@@ -35,7 +35,7 @@ public class LauncherConfiguration {
     private String reportName = DEFAULT_NAME;
     private String userBenchmarkMetadata = "";
     private String userProperties = "";
-    private String reportUploadToken;
+    private String benchAccessToken;
 
     private boolean useCyBenchBenchmarkSettings = true;
     
@@ -179,11 +179,11 @@ public class LauncherConfiguration {
         this.useCyBenchBenchmarkSettings = useCyBenchBenchmarkSettings;
     }
 
-    public String getReportUploadToken() {
-        return reportUploadToken;
+    public String getBenchAccessToken() {
+        return benchAccessToken;
     }
 
-    public void setReportUploadToken(String reportUploadToken) {
-        this.reportUploadToken = reportUploadToken;
+    public void setBenchAccessToken(String benchAccessToken) {
+        this.benchAccessToken = benchAccessToken;
     }
 }
