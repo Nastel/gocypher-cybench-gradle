@@ -224,20 +224,20 @@ public class Launcher implements Plugin<Project> {
                 }
             }
             String reportEncrypted = ReportingService.getInstance().prepareReportForDelivery(securityBuilder, report);
-            String responseWithUrl;
+            String responseWithUrl = null;
+            String deviceReports = null;
+            String resultURL = null;
+            Map<?, ?> response = new HashMap<>();
             configuration.setReportsFolder(PluginUtils.checkReportSaveLocation(configuration.getReportsFolder()));
             if (report.isEligibleForStoringExternally() && configuration.isShouldSendReportToCyBench()) {
                 responseWithUrl = DeliveryService.getInstance().sendReportForStoring(reportEncrypted, configuration.getBenchAccessToken());
-
-                String deviceReports = JSONUtils.parseJsonIntoMap(responseWithUrl).get(Constants.REPORT_USER_URL).toString();
-                String resultURL = JSONUtils.parseJsonIntoMap(responseWithUrl).get(Constants.REPORT_URL).toString();
-
-                if (responseWithUrl != null && !responseWithUrl.isEmpty()) {
+                response = JSONUtils.parseJsonIntoMap(responseWithUrl);
+                if(!response.containsKey("ERROR") && responseWithUrl != null && !responseWithUrl.isEmpty()) {
+                    deviceReports = response.get(Constants.REPORT_USER_URL).toString()+response.get(Constants.FOUND_TOKEN_REPOSITORIES).toString();
+                    resultURL = response.get(Constants.REPORT_URL).toString()+response.get(Constants.FOUND_TOKEN_REPOSITORIES).toString();
                     isReportSentSuccessFully = true;
-                    project.getLogger().lifecycle("Benchmark report submitted successfully to " + Constants.REPORT_URL);
-                    project.getLogger().lifecycle("You can find all device benchmarks on " + deviceReports);
-                    project.getLogger().lifecycle("Your report is available at " + resultURL);
-                    project.getLogger().lifecycle("NOTE: It may take a few minutes for your report to appear online");
+                    report.setDeviceReportsURL(deviceReports);
+                    report.setReportURL(resultURL);
                 }
             } else {
                 project.getLogger().lifecycle("You may submit your report '" + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE) + "' manually at " + Constants.CYB_UPLOAD_URL);
@@ -259,7 +259,15 @@ public class Launcher implements Plugin<Project> {
             IOUtils.removeTestDataFiles();
             project.getLogger().lifecycle("Removed all temporary auto-generated files!!!");
 
-
+            if(!response.containsKey("ERROR") && responseWithUrl != null && !responseWithUrl.isEmpty()) {
+                project.getLogger().lifecycle("Benchmark report submitted successfully to {}", Constants.REPORT_URL);
+                project.getLogger().lifecycle("You can find all device benchmarks on {}", deviceReports);
+                project.getLogger().lifecycle("Your report is available at {}", resultURL);
+                project.getLogger().lifecycle("NOTE: It may take a few minutes for your report to appear online");
+            }else{
+                project.getLogger().lifecycle((String) response.get("ERROR"));
+                project.getLogger().lifecycle("You may submit your report '" + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE) + "' manually at " + Constants.CYB_UPLOAD_URL);
+            }
         } catch (Throwable t) {
             if (t.getMessage() != null && t.getMessage().contains("/META-INF/BenchmarkList")) {
                 project.getLogger().warn("-------------------No benchmark tests found-------------------");
