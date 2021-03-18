@@ -85,6 +85,7 @@ Plugin is configurable inside cybenchJMH{} tag. Properties available for plugin 
 | **reportName**| Name of the benchmark report. |   CyBench Report  |
 | **userProperties**| User defined properties which will be added to benchmarks report section `environmentSettings->userDefinedProperties` as key/value strings. Configuration pattern:`<key1>:<value1>;<key2>:<value2>`. Example which adds a project name:`project=My Test Project;` |   -  |
 | **skip**| A flag which allows to skip benchmarks execution during build process. Benchmarks execution also can be skipped via JVM system property `-DskipCybench`. |   false  |
+| **benchAccessToken** | By providing the "bench" token that you get after creating a workspace in CyBench UI, you can send reports to your private directory, which will be visible only to the users that you authorize. | - |
 | **useCyBenchBenchmarkSettings**| Set if the CyBench provided or JMH default benchmarks settings should be used | true |
 | **shouldFailBuildOnReportDeliveryFailure**| A flag which triggers build failure if the benchmark report was configured to be sent to CyBench but its delivery failed. |   false 
 
