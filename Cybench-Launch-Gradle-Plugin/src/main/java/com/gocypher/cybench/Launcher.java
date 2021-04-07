@@ -230,7 +230,8 @@ public class Launcher implements Plugin<Project> {
             Map<?, ?> response = new HashMap<>();
             configuration.setReportsFolder(PluginUtils.checkReportSaveLocation(configuration.getReportsFolder()));
             if (report.isEligibleForStoringExternally() && configuration.isShouldSendReportToCyBench()) {
-                responseWithUrl = DeliveryService.getInstance().sendReportForStoring(reportEncrypted, configuration.getBenchAccessToken());
+                String tokenAndEmail = PluginUtils.getRequestHeader(configuration.getBenchAccessToken(), configuration.getEmail());
+                responseWithUrl = DeliveryService.getInstance().sendReportForStoring(reportEncrypted, tokenAndEmail);
                 response = JSONUtils.parseJsonIntoMap(responseWithUrl);
                 if(!response.containsKey("ERROR") && responseWithUrl != null && !responseWithUrl.isEmpty()) {
                     deviceReports = response.get(Constants.REPORT_USER_URL).toString() ;

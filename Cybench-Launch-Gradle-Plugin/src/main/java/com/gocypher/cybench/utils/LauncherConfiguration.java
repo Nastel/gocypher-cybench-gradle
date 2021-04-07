@@ -36,6 +36,7 @@ public class LauncherConfiguration {
     private String userBenchmarkMetadata = "";
     private String userProperties = "";
     private String benchAccessToken;
+    private String email;
 
     private boolean useCyBenchBenchmarkSettings = true;
     
@@ -185,5 +186,13 @@ public class LauncherConfiguration {
 
     public void setBenchAccessToken(String benchAccessToken) {
         this.benchAccessToken = benchAccessToken;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }
