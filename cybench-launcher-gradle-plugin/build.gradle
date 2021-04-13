@@ -24,10 +24,6 @@ plugins {
   id 'java'
   id 'maven'
 }
-archivesBaseName = 'cybench-launcher-gradle-plugin'
-group 'com.gocypher.cybench.launcher.plugin'
-version '1.0.0'
-sourceCompatibility = 1.8
 
 repositories {
   mavenCentral ()
@@ -58,142 +54,78 @@ dependencies {
 apply plugin: 'java'
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
-
-task sourceJar(type: Jar) {
-  classifier "sources"
-  from sourceSets.main.allJava
-}
+apply plugin: 'maven'
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
   classifier "javadoc"
   from javadoc.destinationDir
 }
+task sourceJar(type: Jar) {
+  classifier "sources"
+  from sourceSets.main.allJava
+}
 artifacts {
-  archives jar
-  archives sourceJar
-  archives javadocJar
+  archives javadocJar, sourceJar
 }
-signing {
-  sign configurations.archives
-}
+//signing {
+//  sign configurations.archives
+//}
 
-gradlePlugin {
-  plugins {
-    multiplePlugin{
-      id = 'cybench-launcher-gradle-plugin'
-      implementationClass = 'com.gocypher.cybench.Launcher'
-    }
-  }
-}
+group = 'com.gocypher.cybench.launcher.plugin'
+archivesBaseName = 'cybench-launcher-gradle-plugin'
+version = '1.0.0'
+sourceCompatibility = 1.8
 
-
-publishing {
-  publications {
-    mavenJava(MavenPublication) {
-      customizePom(pom)
-      groupId 'com.github.mautini'
-      artifactId 'schemaorg-java'
-      version '1.0.1'
-
-      from components.java
-
-      // create the sign pom artifact
-      pom.withXml {
-        def pomFile = file("${project.buildDir}/generated-pom.xml")
-        writeTo(pomFile)
-        def pomAscFile = signing.sign(pomFile).signatureFiles[0]
-        artifact(pomAscFile) {
-          classifier = null
-          extension = 'pom.asc'
-        }
-      }
-
-      artifact(sourceJar) {
-        classifier = 'sources'
-      }
-      artifact(javadocJar) {
-        classifier = 'javadoc'
-      }
-
-      // create the signed artifacts
-      project.tasks.signArchives.signatureFiles.each {
-        artifact(it) {
-          def matcher = it.file =~ /-(sources|javadoc)\.jar\.asc$/
-          if (matcher.find()) {
-            classifier = matcher.group(1)
-          } else {
-            classifier = null
-          }
-          extension = 'jar.asc'
-        }
-      }
-    }
-  }
+// Build, sign, and upload
+uploadArchives {
   repositories {
-    maven {
-      url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
-      credentials {
-        username sonatypeUsername
-        password sonatypePassword
+    mavenDeployer {
+
+      // Sign POM
+      beforeDeployment { Publication pub -> signing.sign(pub) }
+
+
+      // Destination
+      repository(url: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/") {
+        authentication(userName: sonatypeUsername, password: sonatypePassword)
       }
-    }
-  }
-}
+      snapshotRepository(url: "https://s01.oss.sonatype.org/content/repositories/snapshots/") {
+        authentication(userName: sonatypeUsername, password: sonatypePassword)
+      }
 
-def customizePom(pom) {
-  pom.withXml {
-    def root = asNode()
-
-    // eliminate test-scoped dependencies (no need in maven central POMs)
-    root.dependencies.removeAll { dep ->
-      dep.scope == "test"
-    }
-
-    // add all items necessary for maven central publication
-    root.children().last() + {
-      resolveStrategy = Closure.DELEGATE_FIRST
-
-      name 'cybench-launcher-gradle-plugin'
-      description 'Maven plugin designed to execute JMH benchmarks, collect results, add environment properties , build report and store it into external repository for further analysis.'
-      url 'https://github.com/K2NIO/gocypher-cybench-gradle'
-
-      scm {
+      // Add required metadata to POM
+      pom.project {
+        name 'cybench-launcher-gradle-plugin'
+        description 'Gradle plugin designed to execute JMH benchmarks, collect results, add environment properties , build report and store it into external repository for further analysis.'
         url 'https://github.com/K2NIO/gocypher-cybench-gradle'
-        connection 'scm:git:git://github.com/K2NIO/gocypher-cybench-gradle'
-        developerConnection 'scm:git:git//github.com/K2NIO/gocypher-cybench-gradle'
-      }
-      organization{
-        name 'K2N.IO'
-        url 'https://cybench.io'
-      }
-      licenses {
-        license {
-          name 'GNU Lesser General Public License v2.1'
-          url 'https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt'
-        }
-      }
+        packaging 'jar'
 
-      developers {
-        developer {
-          name 'CyBench Team'
-          email 'info@cybench.io'
-          organization 'K2N.IO'
-          organizationUrl 'https://cybench.io'
+        scm {
+          url 'https://github.com/K2NIO/gocypher-cybench-gradle'
+          connection 'scm:git:git://github.com/K2NIO/gocypher-cybench-gradle'
+          developerConnection 'scm:git:git//github.com/K2NIO/gocypher-cybench-gradle'
+        }
+        organization{
+          name 'K2N.IO'
+          url 'https://cybench.io'
+        }
+        licenses {
+          license {
+            name 'GNU Lesser General Public License v2.1'
+            url 'https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt'
+          }
+        }
+
+        developers {
+          developer {
+            name 'CyBench Team'
+            email 'info@cybench.io'
+            organization 'K2N.IO'
+            organizationUrl 'https://cybench.io'
+          }
         }
       }
     }
-  }
-}
-
-model {
-  tasks.generatePomFileForMavenJavaPublication {
-    destination = file("$buildDir/generated-pom.xml")
-  }
-  tasks.publishMavenJavaPublicationToMavenLocal {
-    dependsOn project.tasks.signArchives
-  }
-  tasks.publishMavenJavaPublicationToMavenRepository {
-    dependsOn project.tasks.signArchives
   }
 }
 
