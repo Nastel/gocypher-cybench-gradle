@@ -19,22 +19,14 @@
 
 package com.gocypher.cybench;
 
-import com.gocypher.cybench.core.utils.IOUtils;
-import com.gocypher.cybench.core.utils.JMHUtils;
-import com.gocypher.cybench.core.utils.JSONUtils;
-import com.gocypher.cybench.launcher.environment.model.HardwareProperties;
-import com.gocypher.cybench.launcher.environment.model.JVMProperties;
-import com.gocypher.cybench.launcher.environment.services.CollectSystemInformation;
-import com.gocypher.cybench.launcher.model.BenchmarkOverviewReport;
-import com.gocypher.cybench.launcher.model.BenchmarkReport;
-import com.gocypher.cybench.launcher.report.DeliveryService;
-import com.gocypher.cybench.launcher.report.ReportingService;
-import com.gocypher.cybench.launcher.utils.ComputationUtils;
-import com.gocypher.cybench.launcher.utils.Constants;
-import com.gocypher.cybench.launcher.utils.SecurityBuilder;
-import com.gocypher.cybench.utils.LauncherConfiguration;
-import com.gocypher.cybench.utils.PluginConstants;
-import com.gocypher.cybench.utils.PluginUtils;
+import java.io.File;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.text.MessageFormat;
+import java.util.*;
+import java.util.stream.Collectors;
+
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -53,24 +45,34 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
-import java.io.File;
-import java.lang.reflect.Method;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.text.MessageFormat;
-import java.util.*;
-import java.util.stream.Collectors;
+import com.gocypher.cybench.core.utils.IOUtils;
+import com.gocypher.cybench.core.utils.JMHUtils;
+import com.gocypher.cybench.core.utils.JSONUtils;
+import com.gocypher.cybench.launcher.environment.model.HardwareProperties;
+import com.gocypher.cybench.launcher.environment.model.JVMProperties;
+import com.gocypher.cybench.launcher.environment.services.CollectSystemInformation;
+import com.gocypher.cybench.launcher.model.BenchmarkOverviewReport;
+import com.gocypher.cybench.launcher.model.BenchmarkReport;
+import com.gocypher.cybench.launcher.report.DeliveryService;
+import com.gocypher.cybench.launcher.report.ReportingService;
+import com.gocypher.cybench.launcher.utils.ComputationUtils;
+import com.gocypher.cybench.launcher.utils.Constants;
+import com.gocypher.cybench.launcher.utils.SecurityBuilder;
+import com.gocypher.cybench.utils.LauncherConfiguration;
+import com.gocypher.cybench.utils.PluginConstants;
+import com.gocypher.cybench.utils.PluginUtils;
 
 public class Launcher implements Plugin<Project> {
-
 
     @Override
     public void apply(Project project) {
         LauncherConfiguration configuration = project.getExtensions().create("cybenchJMH", LauncherConfiguration.class);
         if (configuration.getReportName().equals(LauncherConfiguration.DEFAULT_NAME)) {
-            configuration.setReportName(MessageFormat.format("Benchmark for {0}:{1}:{2}", project.getGroup(), project.getName(), project.getVersion()));
+            configuration.setReportName(MessageFormat.format("Benchmark for {0}:{1}:{2}", project.getGroup(),
+                    project.getName(), project.getVersion()));
         }
-        SourceSet sourceSets = project.getConvention().getPlugin(JavaPluginConvention.class).getSourceSets().getAt("main");
+        SourceSet sourceSets = project.getConvention().getPlugin(JavaPluginConvention.class).getSourceSets()
+                .getAt("main");
 
         try {
             cybenchJMHReflectiveTask(project, sourceSets, configuration);
@@ -116,7 +118,8 @@ public class Launcher implements Plugin<Project> {
 
             SecurityBuilder securityBuilder = new SecurityBuilder();
             Map<String, Object> benchmarkSettings = new HashMap<>();
-            Map<String, Map<String, String>> customBenchmarksMetadata = ComputationUtils.parseBenchmarkMetadata(configuration.getUserProperties());
+            Map<String, Map<String, String>> customBenchmarksMetadata = ComputationUtils
+                    .parseBenchmarkMetadata(configuration.getUserProperties());
 
             benchmarkSettings.put("benchSource", PluginConstants.BENCH_SOURCE);
             benchmarkSettings.put("benchWarmUpIteration", configuration.getWarmUpIterations());
@@ -134,39 +137,45 @@ public class Launcher implements Plugin<Project> {
             Options opt;
             if (configuration.isUseCyBenchBenchmarkSettings()) {
                 opt = optBuild
-                        .forks(configuration.getForks())
-                        .measurementIterations(configuration.getMeasurementIterations())
-                        .measurementTime(TimeValue.seconds(configuration.getMeasurementSeconds()))
-                        .warmupIterations(configuration.getWarmUpIterations())
-                        .warmupTime(TimeValue.seconds(configuration.getWarmUpSeconds()))
-                        .threads(configuration.getThreads())
-                        .shouldDoGC(true)
-                        .addProfiler(GCProfiler.class)
-                        .addProfiler(HotspotThreadProfiler.class)
-                        .addProfiler(HotspotRuntimeProfiler.class)
-                        .addProfiler(SafepointsProfiler.class)
-                        .detectJvmArgs()
+                        .forks(configuration.getForks()) //
+                        .measurementIterations(configuration.getMeasurementIterations()) //
+                        .measurementTime(TimeValue.seconds(configuration.getMeasurementSeconds())) //
+                        .warmupIterations(configuration.getWarmUpIterations()) //
+                        .warmupTime(TimeValue.seconds(configuration.getWarmUpSeconds())) //
+                        .threads(configuration.getThreads()) //
+                        .shouldDoGC(true) //
+                        .addProfiler(GCProfiler.class) //
+                        .addProfiler(HotspotThreadProfiler.class) //
+                        .addProfiler(HotspotRuntimeProfiler.class) //
+                        .addProfiler(SafepointsProfiler.class) //
+                        .detectJvmArgs() //
                         .build();
             } else {
-                opt = optBuild.shouldDoGC(true)
-                        .addProfiler(GCProfiler.class)
-                        .addProfiler(HotspotThreadProfiler.class)
-                        .addProfiler(HotspotRuntimeProfiler.class)
-                        .addProfiler(SafepointsProfiler.class)
-                        .detectJvmArgs()
+                opt = optBuild.shouldDoGC(true) //
+                        .addProfiler(GCProfiler.class) //
+                        .addProfiler(HotspotThreadProfiler.class) //
+                        .addProfiler(HotspotRuntimeProfiler.class) //
+                        .addProfiler(SafepointsProfiler.class) //
+                        .detectJvmArgs() //
                         .build();
             }
             Runner runner = new Runner(opt);
             BenchmarkList benchmarkList;
             CompilerHints compilerHints;
-            File benchmarkListFile = new File(buildPath + PluginConstants.TEST_SOURCE_ROOT + PluginConstants.BENCHMARK_LIST_FILE);
-            File compilerHintFile = new File(buildPath + PluginConstants.TEST_SOURCE_ROOT + PluginConstants.COMPILER_HINT_FILE);
+            File benchmarkListFile = new File(
+                    buildPath + PluginConstants.TEST_SOURCE_ROOT + PluginConstants.BENCHMARK_LIST_FILE);
+            File compilerHintFile = new File(
+                    buildPath + PluginConstants.TEST_SOURCE_ROOT + PluginConstants.COMPILER_HINT_FILE);
             if (benchmarkListFile.exists() && compilerHintFile.exists()) {
-                benchmarkList = BenchmarkList.fromFile(buildPath + PluginConstants.TEST_SOURCE_ROOT + PluginConstants.BENCHMARK_LIST_FILE);
-                compilerHints = CompilerHints.fromFile(buildPath + PluginConstants.TEST_SOURCE_ROOT + PluginConstants.COMPILER_HINT_FILE);
+                benchmarkList = BenchmarkList
+                        .fromFile(buildPath + PluginConstants.TEST_SOURCE_ROOT + PluginConstants.BENCHMARK_LIST_FILE);
+                compilerHints = CompilerHints
+                        .fromFile(buildPath + PluginConstants.TEST_SOURCE_ROOT + PluginConstants.COMPILER_HINT_FILE);
             } else {
-                benchmarkList = BenchmarkList.fromFile(buildPath + PluginConstants.MAIN_SOURCE_ROOT + PluginConstants.BENCHMARK_LIST_FILE);
-                compilerHints = CompilerHints.fromFile(buildPath + PluginConstants.MAIN_SOURCE_ROOT + PluginConstants.COMPILER_HINT_FILE);
+                benchmarkList = BenchmarkList
+                        .fromFile(buildPath + PluginConstants.MAIN_SOURCE_ROOT + PluginConstants.BENCHMARK_LIST_FILE);
+                compilerHints = CompilerHints
+                        .fromFile(buildPath + PluginConstants.MAIN_SOURCE_ROOT + PluginConstants.COMPILER_HINT_FILE);
             }
             PluginUtils.UpdateFieldViaReflection(runner, "list", runner.getClass(), benchmarkList);
             PluginUtils.UpdateFieldViaReflection(compilerHints, "defaultList", CompilerHints.class, compilerHints);
@@ -175,16 +184,20 @@ public class Launcher implements Plugin<Project> {
             Map<String, String> generatedFingerprints = new HashMap<>();
             Map<String, String> manualFingerprints = new HashMap<>();
             Map<String, String> classFingerprints = new HashMap<>();
-            PluginUtils.fingerprintAndHashGeneration(project, benchmarkList, generatedFingerprints, manualFingerprints, classFingerprints);
+            PluginUtils.fingerprintAndHashGeneration(project, benchmarkList, generatedFingerprints, manualFingerprints,
+                    classFingerprints);
 
             Collection<RunResult> results = runner.run();
-            BenchmarkOverviewReport report = ReportingService.getInstance().createBenchmarkReport(results, customBenchmarksMetadata);
+            BenchmarkOverviewReport report = ReportingService.getInstance().createBenchmarkReport(results,
+                    customBenchmarksMetadata);
             report.updateUploadStatus(configuration.getReportUploadStatus());
 
             report.getEnvironmentSettings().put("environment", hwProperties);
             report.getEnvironmentSettings().put("jvmEnvironment", jvmProperties);
-            report.getEnvironmentSettings().put("unclassifiedProperties", CollectSystemInformation.getUnclassifiedProperties());
-            report.getEnvironmentSettings().put("userDefinedProperties", PluginUtils.customUserDefinedProperties(configuration.getUserProperties()));
+            report.getEnvironmentSettings().put("unclassifiedProperties",
+                    CollectSystemInformation.getUnclassifiedProperties());
+            report.getEnvironmentSettings().put("userDefinedProperties",
+                    PluginUtils.customUserDefinedProperties(configuration.getUserProperties()));
             report.setBenchmarkSettings(benchmarkSettings);
             URL[] urlsArray = PluginUtils.getUrlsArray(project);
             for (String s : report.getBenchmarks().keySet()) {
@@ -220,7 +233,8 @@ public class Launcher implements Plugin<Project> {
             project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
             if (configuration.getExpectedScore() > 0) {
                 if (report.getTotalScore().doubleValue() < configuration.getExpectedScore()) {
-                    throw new GradleException("CyBench score is less than expected:" + report.getTotalScore().doubleValue() + " < " + configuration.getExpectedScore());
+                    throw new GradleException("CyBench score is less than expected:"
+                            + report.getTotalScore().doubleValue() + " < " + configuration.getExpectedScore());
                 }
             }
             String reportEncrypted = ReportingService.getInstance().prepareReportForDelivery(securityBuilder, report);
@@ -230,27 +244,32 @@ public class Launcher implements Plugin<Project> {
             Map<?, ?> response = new HashMap<>();
             configuration.setReportsFolder(PluginUtils.checkReportSaveLocation(configuration.getReportsFolder()));
             if (report.isEligibleForStoringExternally() && configuration.isShouldSendReportToCyBench()) {
-                String tokenAndEmail = ComputationUtils.getRequestHeader(configuration.getBenchAccessToken(), configuration.getEmail());
+                String tokenAndEmail = ComputationUtils.getRequestHeader(configuration.getBenchAccessToken(),
+                        configuration.getEmail());
                 responseWithUrl = DeliveryService.getInstance().sendReportForStoring(reportEncrypted, tokenAndEmail);
                 response = JSONUtils.parseJsonIntoMap(responseWithUrl);
-                if(!response.containsKey("ERROR") && responseWithUrl != null && !responseWithUrl.isEmpty()) {
-                    deviceReports = response.get(Constants.REPORT_USER_URL).toString() ;
+                if (!response.containsKey("ERROR") && responseWithUrl != null && !responseWithUrl.isEmpty()) {
+                    deviceReports = response.get(Constants.REPORT_USER_URL).toString();
                     resultURL = response.get(Constants.REPORT_URL).toString();
                     isReportSentSuccessFully = true;
                     report.setDeviceReportsURL(deviceReports);
                     report.setReportURL(resultURL);
                 }
             } else {
-                project.getLogger().lifecycle("You may submit your report '" + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE) + "' manually at " + Constants.CYB_UPLOAD_URL);
+                project.getLogger().lifecycle("You may submit your report '"
+                        + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE)
+                        + "' manually at " + Constants.CYB_UPLOAD_URL);
             }
             String reportJSON = JSONUtils.marshalToPrettyJson(report);
             project.getLogger().lifecycle(reportJSON);
-            String reportFilePath = IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils.createFileNameForReport(configuration.getReportName(), start, report.getTotalScore(), false));
-            String reportCybFilePath = IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils.createFileNameForReport(configuration.getReportName(), start, report.getTotalScore(), true));
+            String reportFilePath = IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils
+                    .createFileNameForReport(configuration.getReportName(), start, report.getTotalScore(), false));
+            String reportCybFilePath = IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils
+                    .createFileNameForReport(configuration.getReportName(), start, report.getTotalScore(), true));
             if (configuration.isShouldStoreReportToFileSystem()) {
-                if(reportFilePath.startsWith("/")){
-                    reportFilePath = PluginConstants.DEFAULT_FILE_SAVE_LOCATION+reportFilePath;
-                    reportCybFilePath = PluginConstants.DEFAULT_FILE_SAVE_LOCATION+reportCybFilePath;
+                if (reportFilePath.startsWith("/")) {
+                    reportFilePath = PluginConstants.DEFAULT_FILE_SAVE_LOCATION + reportFilePath;
+                    reportCybFilePath = PluginConstants.DEFAULT_FILE_SAVE_LOCATION + reportCybFilePath;
                 }
                 project.getLogger().lifecycle("Saving test results to '" + reportFilePath + "'");
                 IOUtils.storeResultsToFile(reportFilePath, reportJSON);
@@ -260,14 +279,16 @@ public class Launcher implements Plugin<Project> {
             IOUtils.removeTestDataFiles();
             project.getLogger().lifecycle("Removed all temporary auto-generated files!!!");
 
-            if(!response.containsKey("ERROR") && responseWithUrl != null && !responseWithUrl.isEmpty()) {
+            if (!response.containsKey("ERROR") && responseWithUrl != null && !responseWithUrl.isEmpty()) {
                 project.getLogger().lifecycle("Benchmark report submitted successfully to {}", Constants.REPORT_URL);
                 project.getLogger().lifecycle("You can find all device benchmarks on {}", deviceReports);
                 project.getLogger().lifecycle("Your report is available at {}", resultURL);
                 project.getLogger().lifecycle("NOTE: It may take a few minutes for your report to appear online");
-            }else{
+            } else {
                 project.getLogger().lifecycle((String) response.get("ERROR"));
-                project.getLogger().lifecycle("You may submit your report '" + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE) + "' manually at " + Constants.CYB_UPLOAD_URL);
+                project.getLogger().lifecycle("You may submit your report '"
+                        + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE)
+                        + "' manually at " + Constants.CYB_UPLOAD_URL);
             }
         } catch (Throwable t) {
             if (t.getMessage() != null && t.getMessage().contains("/META-INF/BenchmarkList")) {
@@ -276,13 +297,13 @@ public class Launcher implements Plugin<Project> {
                 throw new GradleException("Error during benchmarks run", t);
             }
         }
-        if (!isReportSentSuccessFully && configuration.isShouldSendReportToCyBench() && configuration.isShouldFailBuildOnReportDeliveryFailure()) {
+        if (!isReportSentSuccessFully && configuration.isShouldSendReportToCyBench()
+                && configuration.isShouldFailBuildOnReportDeliveryFailure()) {
             throw new GradleException("Error during benchmarks run, report was not sent to CyBench as configured!");
         }
         project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
         project.getLogger().lifecycle("         Finished CyBench benchmarking (" + ComputationUtils.formatInterval(System.currentTimeMillis() - start) + ")");
         project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
     }
-
 
 }

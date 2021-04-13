@@ -39,10 +39,10 @@ public class LauncherConfiguration {
     private String email;
 
     private boolean useCyBenchBenchmarkSettings = true;
-    
+
     private boolean shouldFailBuildOnReportDeliveryFailure = false;
 
-    private boolean skip =  false;
+    private boolean skip = false;
 
     public String getUserProperties() {
         return userProperties;
