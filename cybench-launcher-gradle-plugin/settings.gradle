@@ -17,5 +17,5 @@
  *
  */
 
-rootProject.name = 'gocypher-cybench-launch-gradle-plugin'
+rootProject.name = 'cybench-launcher-gradle-plugin'
 
