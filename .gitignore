@@ -10,11 +10,9 @@
 /**/*_dev.*
 /**/temp
 /**/.vscode
-/development/k2ethereumservices/k2-admin-gui/dist
-/development/k2-service-provider-gui/dist
-/development/Subscriber/dist
-/**/gocypher-cybench-client/deploy
+/**/deploy
 /**/report.json
 /**/output-test.png
 /**/test_picture.png
 /**/.gradle/*
+/**/release
