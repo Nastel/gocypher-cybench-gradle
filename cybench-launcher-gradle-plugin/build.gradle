@@ -23,6 +23,7 @@ plugins {
   id 'maven-publish'
   id 'java'
   id 'maven'
+  id 'signing'
 }
 
 repositories {
@@ -43,17 +44,12 @@ dependencies {
   compile group: 'com.gocypher.cybench.client', name: 'gocypher-cybench-runner', version: '1.0.0'
   compile group: 'com.gocypher.cybench.client', name: 'gocypher-cybench-annotations', version: '1.0.0'
 
-  implementation group: 'org.openjdk.jmh', name: 'jmh-core', version: '1.27'
-  annotationProcessor group: 'org.openjdk.jmh', name: 'jmh-generator-annprocess', version: '1.27'
+  implementation group: 'org.openjdk.jmh', name: 'jmh-core', version: '1.26'
+  annotationProcessor group: 'org.openjdk.jmh', name: 'jmh-generator-annprocess', version: '1.26'
 
   compile group: 'org.reflections', name: 'reflections', version: '0.9.12'
   compile group: 'org.twdata.maven', name: 'mojo-executor', version: '2.3.1'
 }
-
-apply plugin: 'java'
-apply plugin: 'maven-publish'
-apply plugin: 'signing'
-apply plugin: 'maven'
 
 task javadocJar (type: Jar, dependsOn: javadoc) {
   classifier "javadoc"
@@ -66,14 +62,18 @@ task sourceJar (type: Jar) {
 artifacts {
   archives javadocJar, sourceJar
 }
-//signing {
-//  sign configurations.archives
-//}
+
+signing {
+  required { gradle.taskGraph.hasTask("uploadArchives") }
+  useGpgCmd()
+  sign configurations.archives
+}
 
 group = 'com.gocypher.cybench.launcher.plugin'
 archivesBaseName = 'cybench-launcher-gradle-plugin'
 version = '1.0.0'
 sourceCompatibility = 1.8
+
 
 // Build, sign, and upload
 uploadArchives {
@@ -81,7 +81,7 @@ uploadArchives {
     mavenDeployer {
 
       // Sign POM
-      beforeDeployment { Publication pub -> signing.sign (pub) }
+      beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
       // Destination
       repository (url: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/") {
@@ -118,11 +118,18 @@ uploadArchives {
           developer {
             name 'CyBench Team'
             email 'info@cybench.io'
-            organization 'K2N.IO'
             organizationUrl 'https://cybench.io'
           }
         }
       }
+    }
+  }
+}
+gradlePlugin {
+  plugins {
+    multiplePlugin{
+      id = 'cybench-launcher-gradle-plugin'
+      implementationClass = 'com.gocypher.cybench.Launcher'
     }
   }
 }
