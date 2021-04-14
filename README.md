@@ -1,20 +1,19 @@
 # GoCypher CyBench Gradle plugin
 
-[CyBench](https://www.gocypher.com/cybench/) Gradle plugin allows running of CyBench benchmark tests, generating reports and sending it to CyBench website during software build process. Plugin is easy to attach to the project build.gradle file and can be used in continuous integration (CI) systems. 
+[CyBench](https://www.gocypher.com/cybench/) Gradle plugin allows running of CyBench benchmark tests, generating reports and sending it to CyBench website during software build process. Plugin is easy to attach to the project build.gradle file and can be used in continuous integration (CI) systems.
 
-CyBench Gradle plugin executes all classes that use JMH framework for benchmark implementation and creates a report to specified location at the end of benchmarking process. 
+CyBench Gradle plugin executes all classes that use JMH framework for benchmark implementation and creates a report to specified location at the end of benchmarking process.
 
 As CyBench report contains total score, it is possible to configure build failure if score does not pass the pre-defined threshold.
 
-<b>Notice:</b> Benchmarks are running on the server where software build is preformed, so the builds machine must have enough HW resources for a successful and stable benchmarking of software items, and the benchmark results may wary on different machines.  
+**Notice:** Benchmarks are running on the server where software build is preformed, so the builds machine must have enough HW resources for a successful and stable benchmarking of software items, and the benchmark results may wary on different machines.
 
 ### Start using CyBench Gradle plugin
 Include dependency to CyBench Gradle plugin in your project `build.gradle` file as described in [the chapters below](#cybench-gradle-plugin-integration-and-usage) and start using it.
 
-
 ## CyBench Gradle plugin integration and usage
 
-The simplest configuration for the plugin requires: 
+The simplest configuration for the plugin requires:
 
 ```build.gradle
 /* At the top of the build.gradle file */
@@ -63,7 +62,7 @@ Plugin is configurable inside cybenchJMH{} tag. Properties available for plugin 
 | **benchAccessToken** | By providing the "bench" token that you get after creating a workspace in CyBench UI, you can send reports to your private directory, which will be visible only to the users that you authorize. | - |
 | **useCyBenchBenchmarkSettings**| Set if the CyBench provided or JMH default benchmarks settings should be used | true |
 | **email** | Email property is used to identify report sender while sending reports to both private and public repositories | - |
-| **shouldFailBuildOnReportDeliveryFailure**| A flag which triggers build failure if the benchmark report was configured to be sent to CyBench but its delivery failed. |   false 
+| **shouldFailBuildOnReportDeliveryFailure**| A flag which triggers build failure if the benchmark report was configured to be sent to CyBench but its delivery failed. |   false  |
 
 ### Example of Full CyBench Gradle plugin configuration
 
@@ -124,7 +123,7 @@ cybenchJMH{
 ```
 
 #### Optional: gocypher-cybench-annotation For adding custom benchmark annotations @BenchmarkTag
-Install annotation binaries into your local maven repository
+Install annotation binaries into your local Maven repository
 ```sh
 mvn install:install-file -Dfile=gocypher-cybench-annotations-1.0.0.jar -DgroupId=com.gocypher.cybench.client -DartifactId=gocypher-cybench-annotations -Dversion=1.0.0 -Dpackaging=jar
 ```
@@ -137,7 +136,6 @@ Include dependency to annotation processor in your project `build.gradle` file.
  annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.0.0'
  testAnnotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.0.0'
 ```
-
 
 ## More information on benchmarking your code
 * [CyBench Benchmark samples](https://github.com/K2NIO/gocypher-cybench-java-core/tree/main/gocypher-cybench-jvm/src/main/java/com/gocypher/cybench/jmh/jvm/client/tests)
@@ -167,4 +165,4 @@ This step is required in order to use CyBench Gradle plugin if you want to build
 ```sh
      gradle publishToMavenLocal
 ```
-<b>Notice:</b> After successful run project JAR's are installed to local Maven repository.
+**Notice:** After successful run project JAR's are installed to local Maven repository.
