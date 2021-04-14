@@ -71,7 +71,7 @@ signing {
 
 group = 'com.gocypher.cybench.launcher.plugin'
 archivesBaseName = 'cybench-launcher-gradle-plugin'
-version = '1.0.0'
+version = '1.1-SNAPSHOT'
 sourceCompatibility = 1.8
 
 
