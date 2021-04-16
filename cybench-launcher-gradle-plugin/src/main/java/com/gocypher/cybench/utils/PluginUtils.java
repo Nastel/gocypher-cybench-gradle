@@ -44,6 +44,7 @@ public final class PluginUtils {
         return fileName;
     }
 
+    @SuppressWarnings ({"unchecked", "rawtypes"})
     public static void fingerprintAndHashGeneration(Project project, BenchmarkList benchmarkList,
             Map<String, String> generatedFingerprints, Map<String, String> manualFingerprints,
             Map<String, String> classFingerprints) {

@@ -34,8 +34,6 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
 import org.openjdk.jmh.profile.GCProfiler;
-import org.openjdk.jmh.profile.HotspotRuntimeProfiler;
-import org.openjdk.jmh.profile.HotspotThreadProfiler;
 import org.openjdk.jmh.profile.SafepointsProfiler;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.BenchmarkList;
@@ -145,16 +143,16 @@ public class Launcher implements Plugin<Project> {
                         .threads(configuration.getThreads()) //
                         .shouldDoGC(true) //
                         .addProfiler(GCProfiler.class) //
-                        .addProfiler(HotspotThreadProfiler.class) //
-                        .addProfiler(HotspotRuntimeProfiler.class) //
+                        //.addProfiler(HotspotThreadProfiler.class) // obsolete
+                        //.addProfiler(HotspotRuntimeProfiler.class) // obsolete
                         .addProfiler(SafepointsProfiler.class) //
                         .detectJvmArgs() //
                         .build();
             } else {
                 opt = optBuild.shouldDoGC(true) //
                         .addProfiler(GCProfiler.class) //
-                        .addProfiler(HotspotThreadProfiler.class) //
-                        .addProfiler(HotspotRuntimeProfiler.class) //
+                        //.addProfiler(HotspotThreadProfiler.class) // obsolete
+                        //.addProfiler(HotspotRuntimeProfiler.class) // obsolete
                         .addProfiler(SafepointsProfiler.class) //
                         .detectJvmArgs() //
                         .build();
