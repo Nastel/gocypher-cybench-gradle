@@ -39,13 +39,13 @@ dependencies {
   compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.12.3'
   compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.13'
   compile group: 'com.jcabi', name: 'jcabi-manifests', version: '1.1'
-  compile group: 'com.github.oshi', name: 'oshi-core', version: '5.7.0'
+  compile group: 'com.github.oshi', name: 'oshi-core', version: '5.7.1'
   compile group: 'org.jhardware', name: 'jHardware', version: '0.8.6'
   compile group: 'com.gocypher.cybench.client', name: 'gocypher-cybench-runner', version: '1.1-SNAPSHOT'
   compile group: 'com.gocypher.cybench.client', name: 'gocypher-cybench-annotations', version: '1.1-SNAPSHOT'
 
-  implementation group: 'org.openjdk.jmh', name: 'jmh-core', version: '1.27'
-  annotationProcessor group: 'org.openjdk.jmh', name: 'jmh-generator-annprocess', version: '1.27'
+  implementation group: 'org.openjdk.jmh', name: 'jmh-core', version: '1.29'
+  annotationProcessor group: 'org.openjdk.jmh', name: 'jmh-generator-annprocess', version: '1.29'
 
   compile group: 'org.reflections', name: 'reflections', version: '0.9.12'
   compile group: 'org.twdata.maven', name: 'mojo-executor', version: '2.3.1'
