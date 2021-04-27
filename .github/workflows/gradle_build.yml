@@ -41,4 +41,4 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x cybench-launcher-gradle-plugin/gradlew
     - name: Build with Gradle
-      run: ./cybench-launcher-gradle-plugin/gradlew cybench-launcher-gradle-plugin:shadowJar
+      run: ./cybench-launcher-gradle-plugin/gradlew :cybench-launcher-gradle-plugin:shadowJar
