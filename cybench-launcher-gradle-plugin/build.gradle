@@ -36,20 +36,20 @@ dependencies {
   shadow localGroovy ()
   shadow gradleApi ()
 
-  testCompile group: 'junit', name: 'junit', version: '4.13.2'
-  compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.12.3'
-  compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.13'
-  compile group: 'com.jcabi', name: 'jcabi-manifests', version: '1.1'
-  compile group: 'com.github.oshi', name: 'oshi-core', version: '5.7.1'
-  compile group: 'org.jhardware', name: 'jHardware', version: '0.8.6'
-  compile group: 'com.gocypher.cybench.client', name: 'gocypher-cybench-runner', version: '1.1-SNAPSHOT'
-  compile group: 'com.gocypher.cybench.client', name: 'gocypher-cybench-annotations', version: '1.1-SNAPSHOT'
+  testCompile 'junit:junit:4.13.2'
+  compile 'com.fasterxml.jackson.core:jackson-databind:2.12.3'
+  compile 'org.apache.httpcomponents:httpclient:4.5.13'
+  compile 'com.jcabi:jcabi-manifests:1.1'
+  compile 'com.github.oshi:oshi-core:5.7.1'
+  compile 'org.jhardware:jHardware:0.8.6'
+  compile 'com.gocypher.cybench.client:gocypher-cybench-runner:1.1-SNAPSHOT'
+  compile 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.1-SNAPSHOT'
 
-  implementation group: 'org.openjdk.jmh', name: 'jmh-core', version: '1.31'
-  annotationProcessor group: 'org.openjdk.jmh', name: 'jmh-generator-annprocess', version: '1.31'
+  implementation 'org.openjdk.jmh:jmh-core:1.31'
+  annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.31'
 
-  compile group: 'org.reflections', name: 'reflections', version: '0.9.12'
-  compile group: 'org.twdata.maven', name: 'mojo-executor', version: '2.3.1'
+  compile 'org.reflections:reflections:0.9.12'
+  compile 'org.twdata.maven:mojo-executor:2.3.1'
 }
 
 task javadocJar (type: Jar, dependsOn: javadoc) {
