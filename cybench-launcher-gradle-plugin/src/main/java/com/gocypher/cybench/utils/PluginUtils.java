@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
@@ -199,36 +200,14 @@ public final class PluginUtils {
         modifiersField.setInt(listField, listField.getModifiers() & ~Modifier.FINAL);
     }
 
-    public static void appendMetadataFromClass(Class<?> aClass, BenchmarkReport benchmarkReport, Project project,
-            URLClassLoader cl) {
-        try {
-            if (cl.findResource(PluginConstants.METADATA_LIST) != null) {
-                Class<?> cyBenchMetadataList = cl.loadClass(PluginConstants.METADATA_LIST);
-                Class<?> benchmarkMetaData = cl.loadClass(PluginConstants.BENCHMARK_METADATA);
-                Annotation[] annotation = aClass.getDeclaredAnnotations();
-                for (Annotation ann : annotation) {
-                    if (cyBenchMetadataList.equals(ann.annotationType())) {
-                        parseCyBenchArrayMetadata(ann.toString(), project, benchmarkReport);
-                    }
-                    if (benchmarkMetaData.equals(ann.annotationType())) {
-                        parseCyBenchMetadata(ann.toString().split(PluginConstants.BENCHMARK_METADATA_NAME, -1), project,
-                                benchmarkReport);
-                    }
-                }
-            }
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void appendMetadataFromMethod(Optional<java.lang.reflect.Method> benchmarkMethod,
+    public static void appendMetadataFromAnnotated(Optional<? extends AnnotatedElement> annotated,
             BenchmarkReport benchmarkReport, Project project, URLClassLoader cl) {
         try {
             if (cl.findResource(PluginConstants.METADATA_LIST) != null) {
                 Class<?> cyBenchMetadataList = cl.loadClass(PluginConstants.METADATA_LIST);
                 Class<?> benchmarkMetaData = cl.loadClass(PluginConstants.BENCHMARK_METADATA);
-                if (benchmarkMethod.isPresent()) {
-                    Annotation[] annotation = benchmarkMethod.get().getDeclaredAnnotations();
+                if (annotated.isPresent()) {
+                    Annotation[] annotation = annotated.get().getDeclaredAnnotations();
                     for (Annotation ann : annotation) {
                         if (cyBenchMetadataList.equals(ann.annotationType())) {
                             parseCyBenchArrayMetadata(ann.toString(), project, benchmarkReport);

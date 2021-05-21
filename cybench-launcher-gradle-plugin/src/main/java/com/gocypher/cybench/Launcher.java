@@ -212,8 +212,8 @@ public class Launcher implements Plugin<Project> {
                         String method = classAndMethod.getMethod();
                         Class<?> aClass = cl.loadClass(clazz);
                         Optional<Method> benchmarkMethod = JMHUtils.getBenchmarkMethod(method, aClass);
-                        PluginUtils.appendMetadataFromMethod(benchmarkMethod, benchmarkReport, project, cl);
-                        PluginUtils.appendMetadataFromClass(aClass, benchmarkReport, project, cl);
+                        PluginUtils.appendMetadataFromAnnotated(benchmarkMethod, benchmarkReport, project, cl);
+                        PluginUtils.appendMetadataFromAnnotated(Optional.of(aClass), benchmarkReport, project, cl);
                     } catch (Exception exc) {
                         project.getLogger().error("Class not found in the classpath for execution", exc);
                     }
