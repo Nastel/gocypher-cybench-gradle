@@ -45,6 +45,7 @@ import org.openjdk.jmh.runner.options.TimeValue;
 import com.gocypher.cybench.core.utils.IOUtils;
 import com.gocypher.cybench.core.utils.JMHUtils;
 import com.gocypher.cybench.core.utils.JSONUtils;
+import com.gocypher.cybench.launcher.BenchmarkRunner;
 import com.gocypher.cybench.launcher.environment.model.HardwareProperties;
 import com.gocypher.cybench.launcher.environment.model.JVMProperties;
 import com.gocypher.cybench.launcher.environment.services.CollectSystemInformation;
@@ -196,7 +197,7 @@ public class Launcher implements Plugin<Project> {
             report.getEnvironmentSettings().put("unclassifiedProperties",
                     CollectSystemInformation.getUnclassifiedProperties());
             report.getEnvironmentSettings().put("userDefinedProperties",
-                    PluginUtils.customUserDefinedProperties(configuration.getUserProperties()));
+                    ComputationUtils.customUserDefinedProperties(configuration.getUserProperties()));
             report.setBenchmarkSettings(benchmarkSettings);
             URL[] urlsArray = PluginUtils.getUrlsArray(project);
             for (String s : report.getBenchmarks().keySet()) {
@@ -225,7 +226,7 @@ public class Launcher implements Plugin<Project> {
                 report.addToBenchmarks(benchReport);
             }
             report.computeScores();
-            PluginUtils.getReportUploadStatus(report);
+            BenchmarkRunner.getReportUploadStatus(report);
 
             project.getLogger().lifecycle(
                     "-----------------------------------------------------------------------------------------");

@@ -1,9 +1,6 @@
 package com.gocypher.cybench.utils;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
@@ -11,7 +8,6 @@ import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.security.MessageDigest;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,13 +24,11 @@ import org.openjdk.jmh.runner.BenchmarkList;
 import org.openjdk.jmh.runner.BenchmarkListEntry;
 
 import com.gocypher.cybench.core.utils.JMHUtils;
-import com.gocypher.cybench.launcher.model.BenchmarkOverviewReport;
+import com.gocypher.cybench.core.utils.SecurityUtils;
+import com.gocypher.cybench.launcher.BenchmarkRunner;
 import com.gocypher.cybench.launcher.model.BenchmarkReport;
-import com.gocypher.cybench.launcher.utils.Constants;
 
 public final class PluginUtils {
-    private static final Properties cfg = new Properties();
-
     private PluginUtils() {
     }
 
@@ -69,7 +63,7 @@ public final class PluginUtils {
                 for (Method method : javaClass.getMethods()) {
                     try {
                         if (benchmarkMethods.contains(method.getName())) {
-                            String hash = hashByteArray(concatArrays(method.getName().getBytes(),
+                            String hash = SecurityUtils.hashByteArray(concatArrays(method.getName().getBytes(),
                                     method.getSignature().getBytes(), method.getCode().getCode()));
                             generatedFingerprints.put(cls.getName() + "." + method.getName(), hash);
                         }
@@ -134,48 +128,11 @@ public final class PluginUtils {
         return collect.getBytes();
     }
 
-    public static String hashByteArray(byte[] classBytes) throws Exception {
-        MessageDigest md = MessageDigest.getInstance("MD5");
-        md.reset();
-        byte[] digested = md.digest(classBytes);
-        StringBuilder sb = new StringBuilder();
-        for (byte b : digested) {
-            sb.append(Integer.toHexString(0xff & b));
-        }
-        return sb.toString();
-    }
-
-    public static Map<String, Object> customUserDefinedProperties(String customPropertiesStr) {
-        Map<String, Object> customUserProperties = new HashMap<>();
-        if (customPropertiesStr != null && !customPropertiesStr.isEmpty()) {
-            String[] pairs = customPropertiesStr.split(";");
-            for (String pair : pairs) {
-                String[] kv = pair.split("=");
-                if (kv.length == 2) {
-                    customUserProperties.put(kv[0], kv[1]);
-                }
-            }
-        }
-        return customUserProperties;
-    }
-
-    public static byte[] getObjectBytes(Object obj) {
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                ObjectOutputStream out = new ObjectOutputStream(bos)) {
-            out.writeObject(obj);
-            out.flush();
-            return bos.toByteArray();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return new byte[0];
-    }
-
     public static String computeClassHash(Class<?> clazz, Project project) {
         if (clazz != null) {
             try {
-                byte[] classBytes = getObjectBytes(clazz);
-                String classMD5Hash = hashByteArray(classBytes);
+                byte[] classBytes = SecurityUtils.getObjectBytes(clazz);
+                String classMD5Hash = SecurityUtils.hashByteArray(classBytes);
                 return classMD5Hash;
             } catch (Exception e) {
                 project.getLogger().lifecycle("Failed to compute hash for class {}", clazz, e);
@@ -236,37 +193,9 @@ public final class PluginUtils {
             String key = StringUtils.substringBetween(prop, "key=", ",");
             String value = StringUtils.substringBetween(prop, "value=", ")");
             if (key != null && value != null) {
-                checkSetOldMetadataProps(key, value, benchmarkReport);
+                BenchmarkRunner.checkSetOldMetadataProps(key, value, benchmarkReport);
                 benchmarkReport.addMetadata(key, value);
             }
         }
     }
-
-    private static void checkSetOldMetadataProps(String key, String value, BenchmarkReport benchmarkReport) {
-        if (key.equals("api")) {
-            benchmarkReport.setCategory(value);
-        }
-        if (key.equals("context")) {
-            benchmarkReport.setContext(value);
-        }
-        if (key.equals("version")) {
-            benchmarkReport.setVersion(value);
-        }
-    }
-
-    public static void getReportUploadStatus(BenchmarkOverviewReport report) {
-        String reportUploadStatus = getProperty(Constants.REPORT_UPLOAD_STATUS);
-        if (Constants.REPORT_PUBLIC.equals(reportUploadStatus)) {
-            report.setUploadStatus(reportUploadStatus);
-        } else if (Constants.REPORT_PRIVATE.equals(reportUploadStatus)) {
-            report.setUploadStatus(reportUploadStatus);
-        } else {
-            report.setUploadStatus(Constants.REPORT_PUBLIC);
-        }
-    }
-
-    public static String getProperty(String key) {
-        return System.getProperty(key, cfg.getProperty(key));
-    }
-
 }
