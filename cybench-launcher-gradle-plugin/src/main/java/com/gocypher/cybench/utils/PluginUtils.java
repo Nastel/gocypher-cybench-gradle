@@ -44,7 +44,7 @@ public final class PluginUtils {
         return fileName;
     }
 
-    @SuppressWarnings ({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public static void fingerprintAndHashGeneration(Project project, BenchmarkList benchmarkList,
             Map<String, String> generatedFingerprints, Map<String, String> manualFingerprints,
             Map<String, String> classFingerprints) {
@@ -158,9 +158,8 @@ public final class PluginUtils {
     }
 
     public static byte[] getObjectBytes(Object obj) {
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-            ObjectOutputStream out;
-            out = new ObjectOutputStream(bos);
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                ObjectOutputStream out = new ObjectOutputStream(bos)) {
             out.writeObject(obj);
             out.flush();
             return bos.toByteArray();

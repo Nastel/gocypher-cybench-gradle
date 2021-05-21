@@ -34,9 +34,9 @@ apply plugin: 'cybench-launcher-gradle-plugin'
 **Prerequisites**
 * A project must have `dependencies` to JMH framework and contain classes which implements benchmarks using JMH framework.
 ```build.gradle
-    compile  group: 'org.openjdk.jmh', name: 'jmh-core', version: '1.29'
-    annotationProcessor  group: 'org.openjdk.jmh', name:'jmh-generator-annprocess', version:'1.29'
-    testAnnotationProcessor  group: 'org.openjdk.jmh', name:'jmh-generator-annprocess', version:'1.29'
+    compile  group: 'org.openjdk.jmh', name: 'jmh-core', version: '1.31'
+    annotationProcessor  group: 'org.openjdk.jmh', name:'jmh-generator-annprocess', version:'1.31'
+    testAnnotationProcessor  group: 'org.openjdk.jmh', name:'jmh-generator-annprocess', version:'1.31'
 ```
 
 ##Configuration
@@ -91,12 +91,12 @@ repositories {
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile group: 'junit', name: 'junit', version: '4.13.2'
     compile 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.0.0'
     annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.0.0'
 
-    compile  group: 'org.openjdk.jmh', name: 'jmh-core', version: '1.29'
-    annotationProcessor  group: 'org.openjdk.jmh', name:'jmh-generator-annprocess', version:'1.29'
+    compile  group: 'org.openjdk.jmh', name: 'jmh-core', version: '1.31'
+    annotationProcessor  group: 'org.openjdk.jmh', name:'jmh-generator-annprocess', version:'1.31'
 }
 
 /* below the dependencies tag inside the build.gradle */

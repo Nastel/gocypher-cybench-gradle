@@ -45,8 +45,8 @@ dependencies {
   compile group: 'com.gocypher.cybench.client', name: 'gocypher-cybench-runner', version: '1.1-SNAPSHOT'
   compile group: 'com.gocypher.cybench.client', name: 'gocypher-cybench-annotations', version: '1.1-SNAPSHOT'
 
-  implementation group: 'org.openjdk.jmh', name: 'jmh-core', version: '1.29'
-  annotationProcessor group: 'org.openjdk.jmh', name: 'jmh-generator-annprocess', version: '1.29'
+  implementation group: 'org.openjdk.jmh', name: 'jmh-core', version: '1.31'
+  annotationProcessor group: 'org.openjdk.jmh', name: 'jmh-generator-annprocess', version: '1.31'
 
   compile group: 'org.reflections', name: 'reflections', version: '0.9.12'
   compile group: 'org.twdata.maven', name: 'mojo-executor', version: '2.3.1'
