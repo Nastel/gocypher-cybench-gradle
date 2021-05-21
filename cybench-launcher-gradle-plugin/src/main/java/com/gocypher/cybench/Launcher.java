@@ -25,7 +25,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
@@ -103,9 +102,12 @@ public class Launcher implements Plugin<Project> {
 
     public void execute(String buildPath, LauncherConfiguration configuration, Project project) throws GradleException {
         long start = System.currentTimeMillis();
-        project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
-        project.getLogger().lifecycle("                                 Starting CyBench benchmarks                             ");
-        project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
+        project.getLogger()
+                .lifecycle("-----------------------------------------------------------------------------------------");
+        project.getLogger()
+                .lifecycle("                                 Starting CyBench benchmarks                             ");
+        project.getLogger()
+                .lifecycle("-----------------------------------------------------------------------------------------");
         System.setProperty("collectHw", "true");
         boolean isReportSentSuccessFully = false;
         try {
@@ -134,8 +136,7 @@ public class Launcher implements Plugin<Project> {
             OptionsBuilder optBuild = new OptionsBuilder();
             Options opt;
             if (configuration.isUseCyBenchBenchmarkSettings()) {
-                opt = optBuild
-                        .forks(configuration.getForks()) //
+                opt = optBuild.forks(configuration.getForks()) //
                         .measurementIterations(configuration.getMeasurementIterations()) //
                         .measurementTime(TimeValue.seconds(configuration.getMeasurementSeconds())) //
                         .warmupIterations(configuration.getWarmUpIterations()) //
@@ -143,16 +144,16 @@ public class Launcher implements Plugin<Project> {
                         .threads(configuration.getThreads()) //
                         .shouldDoGC(true) //
                         .addProfiler(GCProfiler.class) //
-                        //.addProfiler(HotspotThreadProfiler.class) // obsolete
-                        //.addProfiler(HotspotRuntimeProfiler.class) // obsolete
+                        // .addProfiler(HotspotThreadProfiler.class) // obsolete
+                        // .addProfiler(HotspotRuntimeProfiler.class) // obsolete
                         .addProfiler(SafepointsProfiler.class) //
                         .detectJvmArgs() //
                         .build();
             } else {
                 opt = optBuild.shouldDoGC(true) //
                         .addProfiler(GCProfiler.class) //
-                        //.addProfiler(HotspotThreadProfiler.class) // obsolete
-                        //.addProfiler(HotspotRuntimeProfiler.class) // obsolete
+                        // .addProfiler(HotspotThreadProfiler.class) // obsolete
+                        // .addProfiler(HotspotRuntimeProfiler.class) // obsolete
                         .addProfiler(SafepointsProfiler.class) //
                         .detectJvmArgs() //
                         .build();
@@ -199,8 +200,8 @@ public class Launcher implements Plugin<Project> {
             report.setBenchmarkSettings(benchmarkSettings);
             URL[] urlsArray = PluginUtils.getUrlsArray(project);
             for (String s : report.getBenchmarks().keySet()) {
-                List<BenchmarkReport> custom = report.getBenchmarks().get(s).stream().collect(Collectors.toList());
-                custom.stream().forEach(benchmarkReport -> {
+                List<BenchmarkReport> custom = new ArrayList<>(report.getBenchmarks().get(s));
+                custom.forEach(benchmarkReport -> {
                     String name = benchmarkReport.getName();
                     benchmarkReport.setClassFingerprint(classFingerprints.get(name));
                     benchmarkReport.setGeneratedFingerprint(generatedFingerprints.get(name));
@@ -226,9 +227,11 @@ public class Launcher implements Plugin<Project> {
             report.computeScores();
             PluginUtils.getReportUploadStatus(report);
 
-            project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
+            project.getLogger().lifecycle(
+                    "-----------------------------------------------------------------------------------------");
             project.getLogger().lifecycle("      Report score - " + report.getTotalScore());
-            project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
+            project.getLogger().lifecycle(
+                    "-----------------------------------------------------------------------------------------");
             if (configuration.getExpectedScore() > 0) {
                 if (report.getTotalScore().doubleValue() < configuration.getExpectedScore()) {
                     throw new GradleException("CyBench score is less than expected:"
@@ -299,9 +302,12 @@ public class Launcher implements Plugin<Project> {
                 && configuration.isShouldFailBuildOnReportDeliveryFailure()) {
             throw new GradleException("Error during benchmarks run, report was not sent to CyBench as configured!");
         }
-        project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
-        project.getLogger().lifecycle("         Finished CyBench benchmarking (" + ComputationUtils.formatInterval(System.currentTimeMillis() - start) + ")");
-        project.getLogger().lifecycle("-----------------------------------------------------------------------------------------");
+        project.getLogger()
+                .lifecycle("-----------------------------------------------------------------------------------------");
+        project.getLogger().lifecycle("         Finished CyBench benchmarking ("
+                + ComputationUtils.formatInterval(System.currentTimeMillis() - start) + ")");
+        project.getLogger()
+                .lifecycle("-----------------------------------------------------------------------------------------");
     }
 
 }
