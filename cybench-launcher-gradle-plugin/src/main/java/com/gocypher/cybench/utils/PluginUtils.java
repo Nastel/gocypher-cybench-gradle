@@ -49,7 +49,8 @@ public final class PluginUtils {
     public static void fingerprintAndHashGeneration(Project project, BenchmarkList benchmarkList,
             Map<String, String> generatedFingerprints, Map<String, String> manualFingerprints,
             Map<String, String> classFingerprints) {
-        Set<BenchmarkListEntry> all = benchmarkList.getAll(new JMHUtils.SilentOutputFormat(), Collections.EMPTY_LIST);
+        Set<BenchmarkListEntry> all = benchmarkList.getAll(new JMHUtils.SilentOutputFormat(),
+                Collections.<String> emptyList());
         List<String> benchmarkNames = all.stream().map(BenchmarkListEntry::getUserClassQName)
                 .collect(Collectors.toList());
         URL[] urlsArray = getUrlsArray(project);
@@ -167,7 +168,7 @@ public final class PluginUtils {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return new byte[] {};
+        return new byte[0];
     }
 
     public static String computeClassHash(Class<?> clazz, Project project) {
