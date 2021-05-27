@@ -298,6 +298,8 @@ public class Launcher implements Plugin<Project> {
             } else {
                 throw new GradleException("Error during benchmarks run", t);
             }
+        } finally {
+            DeliveryService.getInstance().close();
         }
         if (!isReportSentSuccessFully && configuration.isShouldSendReportToCyBench()
                 && configuration.isShouldFailBuildOnReportDeliveryFailure()) {
