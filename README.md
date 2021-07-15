@@ -34,9 +34,9 @@ apply plugin: 'cybench-launcher-gradle-plugin'
 **Prerequisites**
 * A project must have `dependencies` to JMH framework and contain classes which implements benchmarks using JMH framework.
 ```build.gradle
-    compile 'org.openjdk.jmh:jmh-core:1.31'
-    annotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.31'
-    testAnnotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.31'
+    compile 'org.openjdk.jmh:jmh-core:1.32'
+    annotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.32'
+    testAnnotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.32'
 ```
 
 ##Configuration
@@ -95,8 +95,8 @@ dependencies {
     compile 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.0.0'
     annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.0.0'
 
-    compile  'org.openjdk.jmh:jmh-core:1.31'
-    annotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.31'
+    compile  'org.openjdk.jmh:jmh-core:1.32'
+    annotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.32'
 }
 
 /* below the dependencies tag inside the build.gradle */

@@ -45,8 +45,8 @@ dependencies {
   compile 'com.gocypher.cybench.client:gocypher-cybench-runner:1.1-SNAPSHOT'
   compile 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.1-SNAPSHOT'
 
-  implementation 'org.openjdk.jmh:jmh-core:1.31'
-  annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.31'
+  implementation 'org.openjdk.jmh:jmh-core:1.32'
+  annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.32'
 
   compile 'org.reflections:reflections:0.9.12'
   compile 'org.twdata.maven:mojo-executor:2.3.1'

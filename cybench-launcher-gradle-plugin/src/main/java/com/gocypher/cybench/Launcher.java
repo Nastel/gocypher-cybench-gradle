@@ -135,30 +135,24 @@ public class Launcher implements Plugin<Project> {
             project.getLogger().lifecycle("Executing benchmarks...");
 
             OptionsBuilder optBuild = new OptionsBuilder();
-            Options opt;
             if (configuration.isUseCyBenchBenchmarkSettings()) {
-                opt = optBuild.forks(configuration.getForks()) //
+                optBuild.forks(configuration.getForks()) //
                         .measurementIterations(configuration.getMeasurementIterations()) //
                         .measurementTime(TimeValue.seconds(configuration.getMeasurementSeconds())) //
                         .warmupIterations(configuration.getWarmUpIterations()) //
                         .warmupTime(TimeValue.seconds(configuration.getWarmUpSeconds())) //
                         .threads(configuration.getThreads()) //
-                        .shouldDoGC(true) //
-                        .addProfiler(GCProfiler.class) //
-                        // .addProfiler(HotspotThreadProfiler.class) // obsolete
-                        // .addProfiler(HotspotRuntimeProfiler.class) // obsolete
-                        .addProfiler(SafepointsProfiler.class) //
-                        .detectJvmArgs() //
-                        .build();
-            } else {
-                opt = optBuild.shouldDoGC(true) //
-                        .addProfiler(GCProfiler.class) //
-                        // .addProfiler(HotspotThreadProfiler.class) // obsolete
-                        // .addProfiler(HotspotRuntimeProfiler.class) // obsolete
-                        .addProfiler(SafepointsProfiler.class) //
-                        .detectJvmArgs() //
-                        .build();
+                ;
             }
+
+            Options opt = optBuild.shouldDoGC(true) //
+                    .addProfiler(GCProfiler.class) //
+                    // .addProfiler(HotspotThreadProfiler.class) // obsolete
+                    // .addProfiler(HotspotRuntimeProfiler.class) // obsolete
+                    .addProfiler(SafepointsProfiler.class) //
+                    .detectJvmArgs() //
+                    .build();
+
             Runner runner = new Runner(opt);
             BenchmarkList benchmarkList;
             CompilerHints compilerHints;
