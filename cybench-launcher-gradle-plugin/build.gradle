@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020, K2N.IO.
+ * Copyright (C) 2021, K2N.IO.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,6 +32,12 @@ repositories {
   mavenLocal ()
 }
 
+group = 'com.gocypher.cybench.launcher.plugin'
+archivesBaseName = 'cybench-launcher-gradle-plugin'
+version = '1.1-SNAPSHOT'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
 dependencies {
   shadow localGroovy ()
   shadow gradleApi ()
@@ -56,10 +62,12 @@ task javadocJar (type: Jar, dependsOn: javadoc) {
   classifier "javadoc"
   from javadoc.destinationDir
 }
+
 task sourceJar (type: Jar) {
   classifier "sources"
   from sourceSets.main.allJava
 }
+
 artifacts {
   archives javadocJar, sourceJar
 }
@@ -69,11 +77,6 @@ signing {
   useGpgCmd ()
   sign configurations.archives
 }
-
-group = 'com.gocypher.cybench.launcher.plugin'
-archivesBaseName = 'cybench-launcher-gradle-plugin'
-version = '1.1-SNAPSHOT'
-sourceCompatibility = 1.8
 
 // Build, sign, and upload
 uploadArchives {
@@ -93,7 +96,7 @@ uploadArchives {
 
       // Add required metadata to POM
       pom.project {
-        name 'cybench-launcher-gradle-plugin'
+        name project.property ('archivesBaseName')
         description 'Gradle plugin designed to execute JMH benchmarks, collect results, add environment properties, build report and store it into external repository for further analysis.'
         url 'https://github.com/K2NIO/gocypher-cybench-gradle'
         packaging 'jar'
@@ -125,10 +128,11 @@ uploadArchives {
     }
   }
 }
+
 gradlePlugin {
   plugins {
     multiplePlugin {
-      id = 'cybench-launcher-gradle-plugin'
+      id = project.property ('archivesBaseName')
       implementationClass = 'com.gocypher.cybench.Launcher'
     }
   }
