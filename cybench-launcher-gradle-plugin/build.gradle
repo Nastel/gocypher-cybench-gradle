@@ -18,18 +18,18 @@
  */
 
 plugins {
-  id 'com.github.johnrengelman.shadow' version '6.1.0'
-  id 'java-gradle-plugin'
-  id 'maven-publish'
-  id 'java'
-  id 'maven'
-  id 'signing'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id 'java-gradle-plugin'
+    id 'maven-publish'
+    id 'java'
+    id 'maven'
+    id 'signing'
 }
 
 repositories {
-  mavenCentral ()
-  maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots" }
-  mavenLocal ()
+    mavenCentral()
+    maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots" }
+    mavenLocal()
 }
 
 group = 'com.gocypher.cybench.launcher.plugin'
@@ -39,107 +39,107 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 dependencies {
-  shadow localGroovy ()
-  shadow gradleApi ()
+    shadow localGroovy()
+    shadow gradleApi()
 
-  testCompile 'junit:junit:4.13.2'
-  compile 'com.fasterxml.jackson.core:jackson-databind:2.12.3'
-  compile 'org.apache.httpcomponents:httpclient:4.5.13'
-  compile 'com.jcabi:jcabi-manifests:1.1'
-  compile 'com.github.oshi:oshi-core:5.7.1'
-  compile 'org.jhardware:jHardware:0.8.6'
-  compile 'com.gocypher.cybench.client:gocypher-cybench-runner:1.1-SNAPSHOT'
-  compile 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.1-SNAPSHOT'
+    testCompile 'junit:junit:4.13.2'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.13.0'
+    compile 'org.apache.httpcomponents:httpclient:4.5.13'
+    compile 'com.jcabi:jcabi-manifests:1.1'
+    compile 'com.github.oshi:oshi-core:5.8.2'
+    compile 'org.jhardware:jHardware:0.8.6'
+    compile 'com.gocypher.cybench.client:gocypher-cybench-runner:1.2-SNAPSHOT'
+    compile 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.2-SNAPSHOT'
 
-  implementation 'org.openjdk.jmh:jmh-core:1.32'
-  annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.32'
+    implementation 'org.openjdk.jmh:jmh-core:1.32'
+    annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.32'
 
-  compile 'org.reflections:reflections:0.9.12'
-  compile 'org.twdata.maven:mojo-executor:2.3.1'
+    compile 'org.reflections:reflections:0.10.1'
+    compile 'org.twdata.maven:mojo-executor:2.3.2'
 }
 
-task javadocJar (type: Jar, dependsOn: javadoc) {
-  classifier "javadoc"
-  from javadoc.destinationDir
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier "javadoc"
+    from javadoc.destinationDir
 }
 
-task sourceJar (type: Jar) {
-  classifier "sources"
-  from sourceSets.main.allJava
+task sourceJar(type: Jar) {
+    classifier "sources"
+    from sourceSets.main.allJava
 }
 
 artifacts {
-  archives javadocJar, sourceJar
+    archives javadocJar, sourceJar
 }
 
 signing {
-  required { gradle.taskGraph.hasTask ("uploadArchives") }
-  useGpgCmd ()
-  sign configurations.archives
+    required { gradle.taskGraph.hasTask("uploadArchives") }
+    useGpgCmd()
+    sign configurations.archives
 }
 
 // Build, sign, and upload
 uploadArchives {
-  repositories {
-    mavenDeployer {
+    repositories {
+        mavenDeployer {
 
-      // Sign POM
-      beforeDeployment { MavenDeployment deployment -> signing.signPom (deployment) }
+            // Sign POM
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-      // Destination
-      repository (url: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/") {
-        authentication (userName: sonatypeUsername, password: sonatypePassword)
-      }
-      snapshotRepository (url: "https://s01.oss.sonatype.org/content/repositories/snapshots/") {
-        authentication (userName: sonatypeUsername, password: sonatypePassword)
-      }
+            // Destination
+            repository(url: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: sonatypeUsername, password: sonatypePassword)
+            }
+            snapshotRepository(url: "https://s01.oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: sonatypeUsername, password: sonatypePassword)
+            }
 
-      // Add required metadata to POM
-      pom.project {
-        name project.property ('archivesBaseName')
-        description 'Gradle plugin designed to execute JMH benchmarks, collect results, add environment properties, build report and store it into external repository for further analysis.'
-        url 'https://github.com/K2NIO/gocypher-cybench-gradle'
-        packaging 'jar'
+            // Add required metadata to POM
+            pom.project {
+                name project.property('archivesBaseName')
+                description 'Gradle plugin designed to execute JMH benchmarks, collect results, add environment properties, build report and store it into external repository for further analysis.'
+                url 'https://github.com/K2NIO/gocypher-cybench-gradle'
+                packaging 'jar'
 
-        scm {
-          url 'https://github.com/K2NIO/gocypher-cybench-gradle'
-          connection 'scm:git:git://github.com/K2NIO/gocypher-cybench-gradle'
-          developerConnection 'scm:git:git//github.com/K2NIO/gocypher-cybench-gradle'
+                scm {
+                    url 'https://github.com/K2NIO/gocypher-cybench-gradle'
+                    connection 'scm:git:git://github.com/K2NIO/gocypher-cybench-gradle'
+                    developerConnection 'scm:git:git//github.com/K2NIO/gocypher-cybench-gradle'
+                }
+                organization {
+                    name 'K2N.IO'
+                    url 'https://cybench.io'
+                }
+                licenses {
+                    license {
+                        name 'GNU Lesser General Public License v2.1'
+                        url 'https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        name 'CyBench Team'
+                        email 'info@cybench.io'
+                        organizationUrl 'https://cybench.io'
+                    }
+                }
+            }
         }
-        organization {
-          name 'K2N.IO'
-          url 'https://cybench.io'
-        }
-        licenses {
-          license {
-            name 'GNU Lesser General Public License v2.1'
-            url 'https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt'
-          }
-        }
-
-        developers {
-          developer {
-            name 'CyBench Team'
-            email 'info@cybench.io'
-            organizationUrl 'https://cybench.io'
-          }
-        }
-      }
     }
-  }
 }
 
 gradlePlugin {
-  plugins {
-    multiplePlugin {
-      id = project.property ('archivesBaseName')
-      implementationClass = 'com.gocypher.cybench.Launcher'
+    plugins {
+        multiplePlugin {
+            id = project.property('archivesBaseName')
+            implementationClass = 'com.gocypher.cybench.Launcher'
+        }
     }
-  }
 }
 
-task release (type: Zip) {
-  from 'build/libs/'
-  include '*'
-  destinationDir (file ('./release'))
+task release(type: Zip) {
+    from 'build/libs/'
+    include '*'
+    destinationDir(file('./release'))
 }
