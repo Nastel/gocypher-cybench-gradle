@@ -24,7 +24,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath "com.gocypher.cybench.launcher.plugin:cybench-launcher-gradle-plugin:1.0.0"
+        classpath "com.gocypher.cybench.launcher.plugin:cybench-launcher-gradle-plugin:1.0.1"
     }
 }
 /* below the dependencies tag inside the build.gradle */
@@ -75,7 +75,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath "com.gocypher.cybench.launcher.plugin:cybench-launcher-gradle-plugin:1.0.0"
+        classpath "com.gocypher.cybench.launcher.plugin:cybench-launcher-gradle-plugin:1.0.1"
     }
 }
 
@@ -92,8 +92,8 @@ repositories {
 
 dependencies {
     testCompile 'junit:junit:4.13.2'
-    compile 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.0.0'
-    annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.0.0'
+    compile 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.2.1'
+    annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.2.1'
 
     compile  'org.openjdk.jmh:jmh-core:1.32'
     annotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.32'
@@ -125,16 +125,16 @@ cybenchJMH{
 #### Optional: gocypher-cybench-annotation For adding custom benchmark annotations @BenchmarkTag
 Install annotation binaries into your local Maven repository
 ```sh
-mvn install:install-file -Dfile=gocypher-cybench-annotations-1.0.0.jar -DgroupId=com.gocypher.cybench.client -DartifactId=gocypher-cybench-annotations -Dversion=1.0.0 -Dpackaging=jar
+mvn install:install-file -Dfile=gocypher-cybench-annotations-1.2.1.jar -DgroupId=com.gocypher.cybench.client -DartifactId=gocypher-cybench-annotations -Dversion=1.2.1 -Dpackaging=jar
 ```
 Include dependency to annotation processor in your project `build.gradle` file. 
 ```build.gradle
- compile 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.0.0'
+ compile 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.2.1'
 ```
 **Notice:** if you want for the tags to be auto generated on your projects you should add annotationProcessor or testAnnotationProcessor. First launch will generate the annotations for benchmarks and fail build.
 ```build.gradle
- annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.0.0'
- testAnnotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.0.0'
+ annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.2.1'
+ testAnnotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.2.1'
 ```
 
 ## More information on benchmarking your code
