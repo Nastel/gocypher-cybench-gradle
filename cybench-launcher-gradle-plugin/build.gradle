@@ -34,7 +34,7 @@ repositories {
 
 group = 'com.gocypher.cybench.launcher.plugin'
 archivesBaseName = 'cybench-launcher-gradle-plugin'
-version = '1.1-SNAPSHOT'
+version = '1.0.2'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -48,11 +48,11 @@ dependencies {
     compile 'com.jcabi:jcabi-manifests:1.1'
     compile 'com.github.oshi:oshi-core:5.8.6'
     compile 'org.jhardware:jHardware:0.8.6'
-    compile 'com.gocypher.cybench.client:gocypher-cybench-runner:1.3-SNAPSHOT'
-    compile 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3-SNAPSHOT'
+    compile 'com.gocypher.cybench.client:gocypher-cybench-runner:1.3.0'
+    compile 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.0'
 
-    implementation 'org.openjdk.jmh:jmh-core:1.33'
-    annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.33'
+    implementation 'org.openjdk.jmh:jmh-core:1.34'
+    annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.34'
 
     compile 'org.reflections:reflections:0.10.2'
     compile 'org.twdata.maven:mojo-executor:2.3.2'
