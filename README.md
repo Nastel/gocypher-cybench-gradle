@@ -1,21 +1,29 @@
 # GoCypher CyBench Gradle plugin
 
-[CyBench](https://cybench.io) Gradle plugin allows running of CyBench benchmark tests, generating reports and sending it to CyBench website during software build process. Plugin is easy to attach to the project build.gradle file and can be used in continuous integration (CI) systems.
+[CyBench](https://cybench.io) Gradle plugin allows running of CyBench benchmark tests, generating reports and sending it
+to CyBench website during software build process. Plugin is easy to attach to the project build.gradle file and can be
+used in continuous integration (CI) systems.
 
-CyBench Gradle plugin executes all classes that use JMH framework for benchmark implementation and creates a report to specified location at the end of benchmarking process.
+CyBench Gradle plugin executes all classes that use JMH framework for benchmark implementation and creates a report to
+specified location at the end of benchmarking process.
 
-As CyBench report contains total score, it is possible to configure build failure if score does not pass the pre-defined threshold.
+As CyBench report contains total score, it is possible to configure build failure if score does not pass the pre-defined
+threshold.
 
-**Notice:** Benchmarks are running on the server where software build is preformed, so the builds machine must have enough HW resources for a successful and stable benchmarking of software items, and the benchmark results may wary on different machines.
+**Notice:** Benchmarks are running on the server where software build is preformed, so the builds machine must have
+enough HW resources for a successful and stable benchmarking of software items, and the benchmark results may wary on
+different machines.
 
 ### Start using CyBench Gradle plugin
-Include dependency to CyBench Gradle plugin in your project `build.gradle` file as described in [the chapters below](#cybench-gradle-plugin-integration-and-usage) and start using it.
+
+Include dependency to CyBench Gradle plugin in your project `build.gradle` file as described
+in [the chapters below](#cybench-gradle-plugin-integration-and-usage) and start using it.
 
 ## CyBench Gradle plugin integration and usage
 
 The simplest configuration for the plugin requires:
 
-```build.gradle
+```groovy
 /* At the top of the build.gradle file */
 buildscript {
     repositories {
@@ -32,14 +40,17 @@ apply plugin: 'cybench-launcher-gradle-plugin'
 ```
 
 **Prerequisites**
-* A project must have `dependencies` to JMH framework and contain classes which implements benchmarks using JMH framework.
-```build.gradle
+
+* A project must have `dependencies` to JMH framework and contain classes which implements benchmarks using JMH
+  framework.
+
+```groovy
     compile 'org.openjdk.jmh:jmh-core:1.32'
     annotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.32'
     testAnnotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.32'
 ```
 
-##Configuration
+## Configuration
 
 Plugin is configurable inside cybenchJMH{} tag. Properties available for plugin behaviour configuration:
 
@@ -66,7 +77,7 @@ Plugin is configurable inside cybenchJMH{} tag. Properties available for plugin 
 
 ### Example of Full CyBench Gradle plugin configuration
 
-```build.gradle
+```groovy
 /* At the top of the build.gradle file */
 buildscript {
     repositories {
@@ -123,21 +134,29 @@ cybenchJMH{
 ```
 
 #### Optional: gocypher-cybench-annotation For adding custom benchmark annotations @BenchmarkTag
+
 Install annotation binaries into your local Maven repository
+
 ```sh
 mvn install:install-file -Dfile=gocypher-cybench-annotations-1.3.0.jar -DgroupId=com.gocypher.cybench.client -DartifactId=gocypher-cybench-annotations -Dversion=1.3.0 -Dpackaging=jar
 ```
-Include dependency to annotation processor in your project `build.gradle` file. 
-```build.gradle
+
+Include dependency to annotation processor in your project `build.gradle` file.
+
+```groovy
  compile 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.0'
 ```
-**Notice:** if you want for the tags to be auto generated on your projects you should add annotationProcessor or testAnnotationProcessor. First launch will generate the annotations for benchmarks and fail build.
-```build.gradle
+
+**Notice:** if you want for the tags to be auto generated on your projects you should add annotationProcessor or
+testAnnotationProcessor. First launch will generate the annotations for benchmarks and fail build.
+
+```groovy
  annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.0'
  testAnnotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.0'
 ```
 
 ## More information on benchmarking your code
+
 * [CyBench Benchmark samples](https://github.com/K2NIO/cybench-java-benchmarks)
 * [Avoiding Benchmarking Pitfalls on the JVM](https://www.oracle.com/technical-resources/articles/java/architect-benchmarking.html#:~:text=JMH%20is%20a%20Java%20harness,to%20unwanted%20virtual%20machine%20optimizations)
 * [JMH - Java Microbenchmark Harness](http://tutorials.jenkov.com/java-performance/jmh.html)
@@ -146,13 +165,15 @@ Include dependency to annotation processor in your project `build.gradle` file.
 
 ## CyBench Gradle Plugin Building
 
-This step is required in order to use CyBench Gradle plugin if you want to build it from the source code to include latest changes.
+This step is required in order to use CyBench Gradle plugin if you want to build it from the source code to include
+latest changes.
 
 #### Build gocypher-cybench-runner project
 
 * Clone [GitHub repository](https://github.com/K2NIO/gocypher-cybench-java) to local machine.
 * Navigate to directory `gocypher-cybench-client`.
-* Run command from the command line 
+* Run command from the command line
+
 ```sh
      mvn clean install
 ```
@@ -161,8 +182,10 @@ This step is required in order to use CyBench Gradle plugin if you want to build
 
 * Clone [GitHub repository](https://github.com/K2NIO/gocypher-cybench-gradle) to local machine.
 * Navigate to directory `cybench-launch-gradle-plugin`.
-* Run command from the command line 
+* Run command from the command line
+
 ```sh
      gradle publishToMavenLocal
 ```
+
 **Notice:** After successful run project JAR's are installed to local Maven repository.
