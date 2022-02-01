@@ -96,7 +96,7 @@ uploadArchives {
 
             // Add required metadata to POM
             pom.project {
-                name project.property('archivesBaseName')
+                name = "$project.archivesBaseName"
                 description 'Gradle plugin designed to execute JMH benchmarks, collect results, add environment properties, build report and store it into external repository for further analysis.'
                 url 'https://github.com/K2NIO/gocypher-cybench-gradle'
                 packaging 'jar'
@@ -132,7 +132,7 @@ uploadArchives {
 gradlePlugin {
     plugins {
         multiplePlugin {
-            id = project.property('archivesBaseName')
+            id = "$project.archivesBaseName"
             implementationClass = 'com.gocypher.cybench.Launcher'
         }
     }
