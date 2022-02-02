@@ -45,9 +45,9 @@ apply plugin: 'cybench-launcher-gradle-plugin'
   framework.
 
 ```groovy
-    compile 'org.openjdk.jmh:jmh-core:1.32'
-    annotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.32'
-    testAnnotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.32'
+    compile 'org.openjdk.jmh:jmh-core:1.34'
+    annotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.34'
+    testAnnotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.34'
 ```
 
 ## Configuration
@@ -106,8 +106,8 @@ dependencies {
     compile 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.0'
     annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.0'
 
-    compile  'org.openjdk.jmh:jmh-core:1.32'
-    annotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.32'
+    compile  'org.openjdk.jmh:jmh-core:1.34'
+    annotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.34'
 }
 
 /* below the dependencies tag inside the build.gradle */

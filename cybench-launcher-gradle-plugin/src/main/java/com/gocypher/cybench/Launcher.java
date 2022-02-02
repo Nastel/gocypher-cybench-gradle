@@ -26,6 +26,7 @@ import java.net.URLClassLoader;
 import java.text.MessageFormat;
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -244,9 +245,9 @@ public class Launcher implements Plugin<Project> {
                         configuration.getEmail());
                 responseWithUrl = DeliveryService.getInstance().sendReportForStoring(reportEncrypted, tokenAndEmail);
                 response = JSONUtils.parseJsonIntoMap(responseWithUrl);
-                if (!response.containsKey("ERROR") && responseWithUrl != null && !responseWithUrl.isEmpty()) {
-                    deviceReports = response.get(Constants.REPORT_USER_URL).toString();
-                    resultURL = response.get(Constants.REPORT_URL).toString();
+                if (!response.containsKey("error") && StringUtils.isNotEmpty(responseWithUrl)) {
+                    deviceReports = String.valueOf(response.get(Constants.REPORT_USER_URL));
+                    resultURL = String.valueOf(response.get(Constants.REPORT_URL));
                     isReportSentSuccessFully = true;
                     report.setDeviceReportsURL(deviceReports);
                     report.setReportURL(resultURL);
@@ -275,13 +276,13 @@ public class Launcher implements Plugin<Project> {
             IOUtils.removeTestDataFiles();
             project.getLogger().lifecycle("Removed all temporary auto-generated files!!!");
 
-            if (!response.containsKey("ERROR") && responseWithUrl != null && !responseWithUrl.isEmpty()) {
+            if (!response.containsKey("error") && StringUtils.isNotEmpty(responseWithUrl)) {
                 project.getLogger().lifecycle("Benchmark report submitted successfully to {}", Constants.REPORT_URL);
                 project.getLogger().lifecycle("You can find all device benchmarks on {}", deviceReports);
                 project.getLogger().lifecycle("Your report is available at {}", resultURL);
                 project.getLogger().lifecycle("NOTE: It may take a few minutes for your report to appear online");
             } else {
-                project.getLogger().lifecycle((String) response.get("ERROR"));
+                project.getLogger().lifecycle((String) response.get("error"));
                 project.getLogger().lifecycle("You may submit your report '"
                         + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE)
                         + "' manually at " + Constants.CYB_UPLOAD_URL);
