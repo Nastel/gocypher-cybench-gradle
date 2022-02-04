@@ -32,7 +32,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath "com.gocypher.cybench.launcher.plugin:cybench-launcher-gradle-plugin:1.0.2"
+        classpath "com.gocypher.cybench.launcher.plugin:cybench-launcher-gradle-plugin:1.0.3"
     }
 }
 /* below the dependencies tag inside the build.gradle */
@@ -86,7 +86,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath "com.gocypher.cybench.launcher.plugin:cybench-launcher-gradle-plugin:1.0.2"
+        classpath "com.gocypher.cybench.launcher.plugin:cybench-launcher-gradle-plugin:1.0.3"
     }
 }
 
@@ -103,8 +103,8 @@ repositories {
 
 dependencies {
     testCompile 'junit:junit:4.13.2'
-    compile 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.0'
-    annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.0'
+    compile 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.1'
+    annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.1'
 
     compile  'org.openjdk.jmh:jmh-core:1.34'
     annotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.34'
@@ -138,21 +138,21 @@ cybenchJMH{
 Install annotation binaries into your local Maven repository
 
 ```sh
-mvn install:install-file -Dfile=gocypher-cybench-annotations-1.3.0.jar -DgroupId=com.gocypher.cybench.client -DartifactId=gocypher-cybench-annotations -Dversion=1.3.0 -Dpackaging=jar
+mvn install:install-file -Dfile=gocypher-cybench-annotations-1.3.1.jar -DgroupId=com.gocypher.cybench.client -DartifactId=gocypher-cybench-annotations -Dversion=1.3.1 -Dpackaging=jar
 ```
 
 Include dependency to annotation processor in your project `build.gradle` file.
 
 ```groovy
- compile 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.0'
+ compile 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.1'
 ```
 
 **Notice:** if you want for the tags to be auto generated on your projects you should add annotationProcessor or
 testAnnotationProcessor. First launch will generate the annotations for benchmarks and fail build.
 
 ```groovy
- annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.0'
- testAnnotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.0'
+ annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.1'
+ testAnnotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.1'
 ```
 
 ## More information on benchmarking your code
