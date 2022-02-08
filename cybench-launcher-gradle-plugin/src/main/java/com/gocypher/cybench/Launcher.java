@@ -172,8 +172,8 @@ public class Launcher implements Plugin<Project> {
                 compilerHints = CompilerHints
                         .fromFile(buildPath + PluginConstants.MAIN_SOURCE_ROOT + PluginConstants.COMPILER_HINT_FILE);
             }
-            PluginUtils.UpdateFieldViaReflection(runner, "list", runner.getClass(), benchmarkList);
-            PluginUtils.UpdateFieldViaReflection(compilerHints, "defaultList", CompilerHints.class, compilerHints);
+            PluginUtils.updateFieldViaReflection(runner, "list", runner.getClass(), benchmarkList);
+            PluginUtils.updateFieldViaReflection(compilerHints, "defaultList", CompilerHints.class, compilerHints);
 
             System.setProperty("checkScoreAnnotation", "false");
             Map<String, String> generatedFingerprints = new HashMap<>();

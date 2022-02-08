@@ -160,7 +160,7 @@ public final class PluginUtils {
         return null;
     }
 
-    public static void UpdateFieldViaReflection(Object target, String fieldName, Class<?> classObject, Object value) {
+    public static void updateFieldViaReflection(Object target, String fieldName, Class<?> classObject, Object value) {
         try {
             Field listField = classObject.getDeclaredField(fieldName);
             updateFileAccess(listField);
