@@ -45,7 +45,7 @@ apply plugin: 'cybench-launcher-gradle-plugin'
   framework.
 
 ```groovy
-    compile 'org.openjdk.jmh:jmh-core:1.34'
+    implementation 'org.openjdk.jmh:jmh-core:1.34'
     annotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.34'
     testAnnotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.34'
 ```
@@ -131,12 +131,16 @@ repositories {
 }
 
 dependencies {
-    testCompile 'junit:junit:4.13.2'
-    compile 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.1'
+    testImplementation 'junit:junit:4.13.2'
+    implementation 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.1'
     annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.1'
+    // if benchmarks are in test directory
+    testAnnotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.1'
 
-    compile  'org.openjdk.jmh:jmh-core:1.34'
+    implementation  'org.openjdk.jmh:jmh-core:1.34'
     annotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.34'
+    // if benchmarks are in test directory
+    testAnnotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.34'
 }
 
 /* below the dependencies tag inside the build.gradle */
@@ -183,7 +187,7 @@ mvn install:install-file -Dfile=gocypher-cybench-annotations-1.3.1.jar -DgroupId
 Include dependency to annotation processor in your project `build.gradle` file.
 
 ```groovy
- compile 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.1'
+ implementation 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.1'
 ```
 
 **Notice:** if you want for the tags to be auto generated on your projects you should add annotationProcessor or
