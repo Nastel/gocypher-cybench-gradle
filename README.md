@@ -50,6 +50,35 @@ apply plugin: 'cybench-launcher-gradle-plugin'
     testAnnotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.34'
 ```
 
+* Project must also have a project.properties file in order for CyBench runner to correctly generate metadata associated with your benchmarks, adding this task will be enough
+
+Groovy:
+```groovy
+      ant.mkdir(dir: "${projectDir}/config/")
+      ant.propertyfile(file: "${projectDir}/config/project.properties") {
+          entry(key: "PROJECT_ARTIFACT", value: project.name)
+          entry(key: "PROJECT_ROOT", value: project.rootProject)
+          entry(key: "PROJECT_VERSION", value: project.version)
+          entry(key: "PROJECT_PARENT", value: project.parent)
+          entry(key: "PROJECT_BUILD_DATE", value: new Date())
+          entry(key: "PROJECT_GROUP", value: project.group)
+      }
+```
+  
+Kotlin:
+```kotlin
+      ant.withGroovyBuilder {
+         "mkdir"("dir" to "${projectDir}/config/")
+         "propertyfile"("file" to "$projectDir/config/project.properties") {
+             "entry"("key" to "PROJECT_ARTIFACT", "value" to project.name)
+             "entry"("key" to "PROJECT_ROOT", "value" to project.rootProject)
+             "entry"("key" to "PROJECT_VERSION", "value" to project.version)
+             "entry"("key" to "PROJECT_PARENT", "value" to project.parent)
+             "entry"("key" to "PROJECT_GROUP", "value" to project.group)
+         }
+      }
+```
+
 ## Configuration
 
 Plugin is configurable inside cybenchJMH{} tag. Properties available for plugin behaviour configuration:
@@ -130,6 +159,16 @@ cybenchJMH{
     userProperties ='project=My Benchmarks Project;'
     useCyBenchBenchmarkSettings = true
     skip = false
+}
+
+ant.mkdir(dir: "${projectDir}/config/")
+ant.propertyfile(file: "${projectDir}/config/project.properties") {
+  entry(key: "PROJECT_ARTIFACT", value: project.name)
+  entry(key: "PROJECT_ROOT", value: project.rootProject)
+  entry(key: "PROJECT_VERSION", value: project.version)
+  entry(key: "PROJECT_PARENT", value: project.parent)
+  entry(key: "PROJECT_BUILD_DATE", value: new Date())
+  entry(key: "PROJECT_GROUP", value: project.group)
 }
 ```
 
