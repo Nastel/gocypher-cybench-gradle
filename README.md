@@ -44,40 +44,43 @@ apply plugin: 'cybench-launcher-gradle-plugin'
 * A project must have `dependencies` to JMH framework and contain classes which implements benchmarks using JMH
   framework.
 
-```groovy
-    implementation 'org.openjdk.jmh:jmh-core:1.34'
-    annotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.34'
-    testAnnotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.34'
-```
+  ```groovy
+  implementation 'org.openjdk.jmh:jmh-core:1.34'
+  annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.34'
+  testAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.34'
+  ```
 
-* Project must also have a project.properties file in order for CyBench runner to correctly generate metadata associated with your benchmarks, adding this task will be enough
+* Project must also have a project.properties file in order for CyBench runner to correctly generate metadata associated
+  with your benchmarks, adding this task will be enough
 
-Groovy:
-```groovy
-      ant.mkdir(dir: "${projectDir}/config/")
-      ant.propertyfile(file: "${projectDir}/config/project.properties") {
-          entry(key: "PROJECT_ARTIFACT", value: project.name)
-          entry(key: "PROJECT_ROOT", value: project.rootProject)
-          entry(key: "PROJECT_VERSION", value: project.version)
-          entry(key: "PROJECT_PARENT", value: project.parent)
-          entry(key: "PROJECT_BUILD_DATE", value: new Date())
-          entry(key: "PROJECT_GROUP", value: project.group)
-      }
-```
-  
-Kotlin:
-```kotlin
-      ant.withGroovyBuilder {
-         "mkdir"("dir" to "${projectDir}/config/")
-         "propertyfile"("file" to "$projectDir/config/project.properties") {
-             "entry"("key" to "PROJECT_ARTIFACT", "value" to project.name)
-             "entry"("key" to "PROJECT_ROOT", "value" to project.rootProject)
-             "entry"("key" to "PROJECT_VERSION", "value" to project.version)
-             "entry"("key" to "PROJECT_PARENT", "value" to project.parent)
-             "entry"("key" to "PROJECT_GROUP", "value" to project.group)
-         }
-      }
-```
+  * Groovy:
+
+    ```groovy
+    ant.mkdir(dir: "${projectDir}/config/")
+    ant.propertyfile(file: "${projectDir}/config/project.properties") {
+        entry(key: "PROJECT_ARTIFACT", value: project.name)
+        entry(key: "PROJECT_ROOT", value: project.rootProject)
+        entry(key: "PROJECT_VERSION", value: project.version)
+        entry(key: "PROJECT_PARENT", value: project.parent)
+        entry(key: "PROJECT_BUILD_DATE", value: new Date())
+        entry(key: "PROJECT_GROUP", value: project.group)
+    }
+    ```
+
+  * Kotlin:
+
+    ```kotlin
+    ant.withGroovyBuilder {
+        "mkdir"("dir" to "${projectDir}/config/")
+        "propertyfile"("file" to "$projectDir/config/project.properties") {
+            "entry"("key" to "PROJECT_ARTIFACT", "value" to project.name)
+            "entry"("key" to "PROJECT_ROOT", "value" to project.rootProject)
+            "entry"("key" to "PROJECT_VERSION", "value" to project.version)
+            "entry"("key" to "PROJECT_PARENT", "value" to project.parent)
+            "entry"("key" to "PROJECT_GROUP", "value" to project.group)
+        }
+    }
+    ```
 
 ## Configuration
 
@@ -137,17 +140,17 @@ dependencies {
     // if benchmarks are in test directory
     testAnnotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.1'
 
-    implementation  'org.openjdk.jmh:jmh-core:1.34'
-    annotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.34'
+    implementation 'org.openjdk.jmh:jmh-core:1.34'
+    annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.34'
     // if benchmarks are in test directory
-    testAnnotationProcessor  'org.openjdk.jmh:jmh-generator-annprocess:1.34'
+    testAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.34'
 }
 
 /* below the dependencies tag inside the build.gradle */
 apply plugin: 'cybench-launcher-gradle-plugin'
 
 /* Configuration properties that could be provided to the plugin */
-cybenchJMH{
+cybenchJMH {
     forks = 1
     threads = 1
     measurementIterations = 1
@@ -160,19 +163,19 @@ cybenchJMH{
     reportUploadStatus = 'public'
     reportsFolder = './reports/'
     reportName = 'My First Benchmark'
-    userProperties ='project=My Benchmarks Project;'
+    userProperties = 'project=My Benchmarks Project;'
     useCyBenchBenchmarkSettings = true
     skip = false
 }
 
 ant.mkdir(dir: "${projectDir}/config/")
 ant.propertyfile(file: "${projectDir}/config/project.properties") {
-  entry(key: "PROJECT_ARTIFACT", value: project.name)
-  entry(key: "PROJECT_ROOT", value: project.rootProject)
-  entry(key: "PROJECT_VERSION", value: project.version)
-  entry(key: "PROJECT_PARENT", value: project.parent)
-  entry(key: "PROJECT_BUILD_DATE", value: new Date())
-  entry(key: "PROJECT_GROUP", value: project.group)
+    entry(key: "PROJECT_ARTIFACT", value: project.name)
+    entry(key: "PROJECT_ROOT", value: project.rootProject)
+    entry(key: "PROJECT_VERSION", value: project.version)
+    entry(key: "PROJECT_PARENT", value: project.parent)
+    entry(key: "PROJECT_BUILD_DATE", value: new Date())
+    entry(key: "PROJECT_GROUP", value: project.group)
 }
 ```
 
@@ -187,15 +190,15 @@ mvn install:install-file -Dfile=gocypher-cybench-annotations-1.3.1.jar -DgroupId
 Include dependency to annotation processor in your project `build.gradle` file.
 
 ```groovy
- implementation 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.1'
+implementation 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.1'
 ```
 
 **Notice:** if you want for the tags to be auto generated on your projects you should add annotationProcessor or
 testAnnotationProcessor. First launch will generate the annotations for benchmarks and fail build.
 
 ```groovy
- annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.1'
- testAnnotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.1'
+annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.1'
+testAnnotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.1'
 ```
 
 ## More information on benchmarking your code
@@ -208,7 +211,7 @@ testAnnotationProcessor. First launch will generate the annotations for benchmar
 
 ## CyBench Gradle Plugin Building
 
-This step is required in order to use CyBench Gradle plugin if you want to build it from the source code to include
+This step is required in order to use CyBench Gradle plugin if you want to build it from the source code to include the
 latest changes.
 
 #### Build gocypher-cybench-runner project
