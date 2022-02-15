@@ -132,16 +132,17 @@ public class Launcher implements Plugin<Project> {
 
             benchmarkSettings.put("benchThreadCount", configuration.getThreads());
             benchmarkSettings.put("benchReportName", configuration.getReportName());
-            
+
             project.getLogger().lifecycle("** Checking for required metadata...");
-            if (!BenchmarkRunner.checkValidMetadataProps("artifactId") || !BenchmarkRunner.checkValidMetadataProps("version")) {
-            	project.getLogger().lifecycle("** File project.properties not found. Please make sure to add the necessary ant tasks to your build file to generate project.properties");
+            if (!BenchmarkRunner.checkValidMetadataProps("artifactId")
+                    || !BenchmarkRunner.checkValidMetadataProps("version")) {
+                project.getLogger().lifecycle("** File project.properties not found. Please make sure to add the necessary ant tasks to your build file to generate project.properties");
                 project.getLogger().lifecycle("** CyBench requires the metadata found in this file in order to annotate benchmark reports correctly.");
                 project.getLogger().lifecycle("** In order to generate this file, you must add two ant tasks to your Gradle build file. These tasks can be found at CyBench Gradle Plugin's README");
                 project.getLogger().lifecycle("** For more information, please visit the CyBench Wiki (https://github.com/K2NIO/gocypher-cybench-java/wiki)");
-            	System.exit(1);
+                System.exit(1);
             }
-            
+
             project.getLogger().lifecycle("Executing benchmarks...");
 
             OptionsBuilder optBuild = new OptionsBuilder();
