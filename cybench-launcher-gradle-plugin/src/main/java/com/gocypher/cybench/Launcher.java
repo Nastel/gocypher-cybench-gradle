@@ -133,14 +133,11 @@ public class Launcher implements Plugin<Project> {
             benchmarkSettings.put("benchThreadCount", configuration.getThreads());
             benchmarkSettings.put("benchReportName", configuration.getReportName());
 
-            project.getLogger().lifecycle("** Checking for required metadata...");
-            if (!BenchmarkRunner.checkValidMetadataProps("artifactId")
-                    || !BenchmarkRunner.checkValidMetadataProps("version")) {
-                project.getLogger().lifecycle("** File project.properties not found. Please make sure to add the necessary ant tasks to your build file to generate project.properties");
-                project.getLogger().lifecycle("** CyBench requires the metadata found in this file in order to annotate benchmark reports correctly.");
-                project.getLogger().lifecycle("** In order to generate this file, you must add two ant tasks to your Gradle build file. These tasks can be found at CyBench Gradle Plugin's README");
-                project.getLogger().lifecycle("** For more information, please visit the CyBench Wiki (https://github.com/K2NIO/gocypher-cybench-java/wiki)");
-                System.exit(1);
+            if (!BenchmarkRunner.checkValidMetadata("artifactId")) {
+                BenchmarkRunner.failBuildFromMissingMetadata("Project");
+            }
+            if (!BenchmarkRunner.checkValidMetadata("version")) {
+                BenchmarkRunner.failBuildFromMissingMetadata("Version");
             }
 
             project.getLogger().lifecycle("Executing benchmarks...");
@@ -293,7 +290,9 @@ public class Launcher implements Plugin<Project> {
                 project.getLogger().lifecycle("Your report is available at {}", resultURL);
                 project.getLogger().lifecycle("NOTE: It may take a few minutes for your report to appear online");
             } else {
-                project.getLogger().lifecycle((String) response.get("error"));
+                if (response.containsKey("error")) {
+                    project.getLogger().lifecycle((String) response.get("error"));
+                }
                 project.getLogger().lifecycle("You may submit your report '"
                         + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE)
                         + "' manually at " + Constants.CYB_UPLOAD_URL);
