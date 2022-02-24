@@ -243,7 +243,6 @@ public class Launcher implements Plugin<Project> {
                 }
             }
             String reportEncrypted = ReportingService.getInstance().prepareReportForDelivery(securityBuilder, report);
-            String responseWithUrl = null;
             String deviceReports = null;
             String resultURL = null;
             Map<?, ?> response = new HashMap<>();
@@ -251,9 +250,12 @@ public class Launcher implements Plugin<Project> {
             if (report.isEligibleForStoringExternally() && configuration.isShouldSendReportToCyBench()) {
                 String tokenAndEmail = ComputationUtils.getRequestHeader(configuration.getBenchAccessToken(),
                         configuration.getEmail());
-                responseWithUrl = DeliveryService.getInstance().sendReportForStoring(reportEncrypted, tokenAndEmail);
-                response = JSONUtils.parseJsonIntoMap(responseWithUrl);
-                if (!response.containsKey("error") && StringUtils.isNotEmpty(responseWithUrl)) {
+                String responseWithUrl = DeliveryService.getInstance().sendReportForStoring(reportEncrypted,
+                        tokenAndEmail);
+                if (StringUtils.isNotEmpty(responseWithUrl)) {
+                    response = JSONUtils.parseJsonIntoMap(responseWithUrl);
+                }
+                if (!BenchmarkRunner.isErrorResponse(response)) {
                     deviceReports = String.valueOf(response.get(Constants.REPORT_USER_URL));
                     resultURL = String.valueOf(response.get(Constants.REPORT_URL));
                     isReportSentSuccessFully = true;
@@ -284,14 +286,15 @@ public class Launcher implements Plugin<Project> {
             IOUtils.removeTestDataFiles();
             project.getLogger().lifecycle("Removed all temporary auto-generated files!!!");
 
-            if (!response.containsKey("error") && StringUtils.isNotEmpty(responseWithUrl)) {
+            if (!BenchmarkRunner.isErrorResponse(response)) {
                 project.getLogger().lifecycle("Benchmark report submitted successfully to {}", Constants.REPORT_URL);
                 project.getLogger().lifecycle("You can find all device benchmarks on {}", deviceReports);
                 project.getLogger().lifecycle("Your report is available at {}", resultURL);
                 project.getLogger().lifecycle("NOTE: It may take a few minutes for your report to appear online");
             } else {
-                if (response.containsKey("error")) {
-                    project.getLogger().lifecycle((String) response.get("error"));
+                String errMsg = BenchmarkRunner.getErrorResponseMessage(response);
+                if (errMsg != null) {
+                    project.getLogger().lifecycle(errMsg);
                 }
                 project.getLogger().lifecycle("You may submit your report '"
                         + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE)
