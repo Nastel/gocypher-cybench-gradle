@@ -286,7 +286,7 @@ public class Launcher implements Plugin<Project> {
             IOUtils.removeTestDataFiles();
             project.getLogger().lifecycle("Removed all temporary auto-generated files!!!");
 
-            if (!BenchmarkRunner.isErrorResponse(response)) {
+            if (!response.isEmpty() && !BenchmarkRunner.isErrorResponse(response)) {
                 project.getLogger().lifecycle("Benchmark report submitted successfully to {}", Constants.REPORT_URL);
                 project.getLogger().lifecycle("You can find all device benchmarks on {}", deviceReports);
                 project.getLogger().lifecycle("Your report is available at {}", resultURL);
