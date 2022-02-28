@@ -229,7 +229,7 @@ public class Launcher implements Plugin<Project> {
                 report.addToBenchmarks(benchReport);
             }
             report.computeScores();
-            BenchmarkRunner.getReportUploadStatus(report);
+            // BenchmarkRunner.getReportUploadStatus(report);
 
             project.getLogger().lifecycle(
                     "-----------------------------------------------------------------------------------------");
@@ -268,7 +268,7 @@ public class Launcher implements Plugin<Project> {
                         + "' manually at " + Constants.CYB_UPLOAD_URL);
             }
             String reportJSON = JSONUtils.marshalToPrettyJson(report);
-            project.getLogger().lifecycle(reportJSON);
+            // project.getLogger().lifecycle(reportJSON);
             String reportFilePath = IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils
                     .createFileNameForReport(configuration.getReportName(), start, report.getTotalScore(), false));
             String reportCybFilePath = IOUtils.getReportsPath(configuration.getReportsFolder(), ComputationUtils
@@ -294,7 +294,7 @@ public class Launcher implements Plugin<Project> {
             } else {
                 String errMsg = BenchmarkRunner.getErrorResponseMessage(response);
                 if (errMsg != null) {
-                    project.getLogger().lifecycle(errMsg);
+                    project.getLogger().error(errMsg);
                 }
                 project.getLogger().lifecycle("You may submit your report '"
                         + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE)
