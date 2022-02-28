@@ -223,13 +223,18 @@ public class Launcher implements Plugin<Project> {
                     }
                 });
             }
-            List<BenchmarkReport> customBenchmarksCategoryCheck = report.getBenchmarks().get("CUSTOM");
-            report.getBenchmarks().remove("CUSTOM");
-            for (BenchmarkReport benchReport : customBenchmarksCategoryCheck) {
-                report.addToBenchmarks(benchReport);
+
+            if (report.getBenchmarks() != null && !report.getBenchmarks().isEmpty()) {
+                List<BenchmarkReport> customBenchmarksCategoryCheck = report.getBenchmarks().get("CUSTOM");
+                report.getBenchmarks().remove("CUSTOM");
+                if (customBenchmarksCategoryCheck != null) {
+                    for (BenchmarkReport benchReport : customBenchmarksCategoryCheck) {
+                        report.addToBenchmarks(benchReport);
+                    }
+                }
+                report.computeScores();
+                // BenchmarkRunner.getReportUploadStatus(report);
             }
-            report.computeScores();
-            // BenchmarkRunner.getReportUploadStatus(report);
 
             project.getLogger().lifecycle(
                     "-----------------------------------------------------------------------------------------");
@@ -263,9 +268,9 @@ public class Launcher implements Plugin<Project> {
                     report.setReportURL(resultURL);
                 }
             } else {
-                project.getLogger().lifecycle("You may submit your report '"
-                        + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE)
-                        + "' manually at " + Constants.CYB_UPLOAD_URL);
+                // project.getLogger().lifecycle("You may submit your report '"
+                //         + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE)
+                //         + "' manually at " + Constants.CYB_UPLOAD_URL);
             }
             String reportJSON = JSONUtils.marshalToPrettyJson(report);
             // project.getLogger().lifecycle(reportJSON);
