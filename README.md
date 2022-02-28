@@ -153,19 +153,14 @@ apply plugin: 'cybench-launcher-gradle-plugin'
 cybenchJMH {
     forks = 1
     threads = 1
-    measurementIterations = 1
+    measurementIterations = 5
     measurementSeconds = 5
-    warmUpIterations = 0
-    warmUpSeconds = 10
-    expectedScore = 1000
-    shouldSendReportToCyBench = true
-    shouldStoreReportToFileSystem = true
-    reportUploadStatus = 'public'
+    warmUpIterations = 1
+    warmUpSeconds = 5
+    shouldSendReportToCyBench = false
     reportsFolder = './reports/'
-    reportName = 'My First Benchmark'
-    userProperties = 'project=My Benchmarks Project;'
-    useCyBenchBenchmarkSettings = true
-    skip = false
+    reportName = 'My Report'
+    userProperties = 'library=My Library;'
 }
 
 ant.mkdir(dir: "${projectDir}/config/")
