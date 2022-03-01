@@ -269,8 +269,8 @@ public class Launcher implements Plugin<Project> {
                 }
             } else {
                 // project.getLogger().lifecycle("You may submit your report '"
-                //         + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE)
-                //         + "' manually at " + Constants.CYB_UPLOAD_URL);
+                // + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE)
+                // + "' manually at " + Constants.CYB_UPLOAD_URL);
             }
             String reportJSON = JSONUtils.marshalToPrettyJson(report);
             // project.getLogger().lifecycle(reportJSON);
@@ -313,17 +313,18 @@ public class Launcher implements Plugin<Project> {
             }
         } finally {
             DeliveryService.getInstance().close();
+
+            project.getLogger().lifecycle(
+                    "-----------------------------------------------------------------------------------------");
+            project.getLogger().lifecycle("         Finished CyBench benchmarking ("
+                    + ComputationUtils.formatInterval(System.currentTimeMillis() - start) + ")");
+            project.getLogger().lifecycle(
+                    "-----------------------------------------------------------------------------------------");
         }
         if (!isReportSentSuccessFully && configuration.isShouldSendReportToCyBench()
                 && configuration.isShouldFailBuildOnReportDeliveryFailure()) {
             throw new GradleException("Error during benchmarks run, report was not sent to CyBench as configured!");
         }
-        project.getLogger()
-                .lifecycle("-----------------------------------------------------------------------------------------");
-        project.getLogger().lifecycle("         Finished CyBench benchmarking ("
-                + ComputationUtils.formatInterval(System.currentTimeMillis() - start) + ")");
-        project.getLogger()
-                .lifecycle("-----------------------------------------------------------------------------------------");
     }
 
 }
