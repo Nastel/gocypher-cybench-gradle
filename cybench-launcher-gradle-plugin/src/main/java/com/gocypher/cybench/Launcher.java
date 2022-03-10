@@ -133,12 +133,7 @@ public class Launcher implements Plugin<Project> {
             benchmarkSettings.put("benchThreadCount", configuration.getThreads());
             benchmarkSettings.put("benchReportName", configuration.getReportName());
 
-            if (!BenchmarkRunner.checkValidMetadata("artifactId")) {
-                BenchmarkRunner.failBuildFromMissingMetadata("Project");
-            }
-            if (!BenchmarkRunner.checkValidMetadata("version")) {
-                BenchmarkRunner.failBuildFromMissingMetadata("Version");
-            }
+            BenchmarkRunner.checkProjectMetadataExists();
 
             project.getLogger().lifecycle("Executing benchmarks...");
 
@@ -255,8 +250,9 @@ public class Launcher implements Plugin<Project> {
             if (report.isEligibleForStoringExternally() && configuration.isShouldSendReportToCyBench()) {
                 String tokenAndEmail = ComputationUtils.getRequestHeader(configuration.getBenchAccessToken(),
                         configuration.getEmail());
+                String benchQueryToken = configuration.getBenchQueryToken();
                 String responseWithUrl = DeliveryService.getInstance().sendReportForStoring(reportEncrypted,
-                        tokenAndEmail);
+                        tokenAndEmail, benchQueryToken);
                 if (StringUtils.isNotEmpty(responseWithUrl)) {
                     response = JSONUtils.parseJsonIntoMap(responseWithUrl);
                 }
