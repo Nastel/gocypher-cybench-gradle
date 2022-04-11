@@ -108,6 +108,20 @@ Plugin is configurable inside cybenchJMH{} tag. Properties available for plugin 
 | **email** | Email property is used to identify report sender while sending reports to both private and public repositories | - |
 | **shouldFailBuildOnReportDeliveryFailure**| A flag which triggers build failure if the benchmark report was configured to be sent to CyBench but its delivery failed. |   false  |
 
+You can also add a configuration for automated performance regression testing, which will run with every single benchmark report. This is configurable inside the cybenchAutomation{} tag.
+
+| Property name        | Description           | Options  |
+| ------------- |-------------| -----:|
+| **scope** | Choose between comparing within current version, or between previous versions. When using `BETWEEN`, a specific version must be specified with the property `compareVersion`. | `WITHIN` or `BETWEEN` |
+| **compareVersion** | Used for `BETWEEN` version comparisons. | Any project version you have previously tested |
+| **numLatestReports** | How many reports do you want to compare against? 1 will compare this report against the most recent report in the version you are comparing against. # > 1 will compare this report against the average of the scores of the most recent # reports in the version you are comparing against. | Number >= 1 |
+| **anomaliesAllowed** | How many anomalies do you want to allow? If the number of benchmark anomalies surpasses your specified number, CyBench benchmark runner will fail... triggering your CI/CD pipeline to halt. | Number >= 1 |
+| **method** | Decide which method of comparison to use. `DELTA` will compare difference in score, and requires an additional property, `threshold`. `SD` will do comparisons regarding standard deviation. `SD` requires an additional property as well, `deviationsAllowed`. | `DELTA` or `SD` |
+| **threshold** | Only used with the `DELTA` method. `GREATER` will compare raw scores, `PERCENT_CHANGE` is used to measure the percent change of the score in comparison to previous scores. `PERCENT_CHANGE` requires an additional property: `percentChangeAllowed`. | `GREATER` or `PERCENT_CHANGE` |
+| **percentChangeAllowed** | This argument is used when running assertions, makes sure your new score is within X percent of the previous scores you're comparing to. | Any Double value. |
+| **deviationsAllowed** | Used with assertions to check that the new score is within the given amount of deviations from the mean. (mean being calculated from the scores being compared to). | Any Double value. |
+
+
 ### Example of Full CyBench Gradle plugin configuration
 
 ```groovy
@@ -162,6 +176,15 @@ cybenchJMH {
     reportsFolder = './reports/'
     reportName = 'My Report'
     userProperties = 'library=My Library;'
+}
+
+cybenchAutomation {
+    scope = "BETWEEN"
+    compareVersion = "2.0"
+    numLatestReports = 1
+    anomaliesAllowed = 1
+    method = "SD"
+    deviationsAllowed = 2
 }
 
 ant.mkdir(dir: "${projectDir}/config/")
