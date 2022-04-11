@@ -26,6 +26,8 @@ import java.net.URLClassLoader;
 import java.text.MessageFormat;
 import java.util.*;
 
+import com.gocypher.cybench.utils.AutomatedComparisonConfig;
+import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
@@ -60,6 +62,7 @@ import com.gocypher.cybench.launcher.utils.SecurityBuilder;
 import com.gocypher.cybench.utils.LauncherConfiguration;
 import com.gocypher.cybench.utils.PluginConstants;
 import com.gocypher.cybench.utils.PluginUtils;
+import com.gocypher.cybench.model.ComparisonConfig;
 
 public class Launcher implements Plugin<Project> {
 
@@ -70,18 +73,20 @@ public class Launcher implements Plugin<Project> {
             configuration.setReportName(MessageFormat.format("Benchmark for {0}:{1}:{2}", project.getGroup(),
                     project.getName(), project.getVersion()));
         }
+        AutomatedComparisonConfig loadedAutoConfiguration = project.getExtensions().create("cybenchAutomation", AutomatedComparisonConfig.class);
+
         SourceSet sourceSets = project.getConvention().getPlugin(JavaPluginConvention.class).getSourceSets()
                 .getAt("main");
 
         try {
-            cybenchJMHReflectiveTask(project, sourceSets, configuration);
+            cybenchJMHReflectiveTask(project, sourceSets, configuration, loadedAutoConfiguration);
             project.getTasks().getByName("testClasses").finalizedBy("cybenchRun");
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void cybenchJMHReflectiveTask(Project project, SourceSet sourceSets, LauncherConfiguration configuration) {
+    public void cybenchJMHReflectiveTask(Project project, SourceSet sourceSets, LauncherConfiguration configuration, AutomatedComparisonConfig loadedAutoConfiguration) {
         StringBuilder classpath = new StringBuilder();
         String buildPath = String.valueOf(project.getBuildDir());
         String testBuildPath = project.getBuildDir() + PluginConstants.TEST_SOURCE_ROOT;
@@ -92,7 +97,7 @@ public class Launcher implements Plugin<Project> {
         project.task("cybenchRun").doLast(task -> {
             if (!configuration.isSkip() && System.getProperty("skipCybench") == null) {
                 try {
-                    execute(buildPath, configuration, project);
+                    execute(buildPath, configuration, loadedAutoConfiguration, project);
                 } catch (GradleException e) {
                     e.printStackTrace();
                 }
@@ -102,7 +107,7 @@ public class Launcher implements Plugin<Project> {
         });
     }
 
-    public void execute(String buildPath, LauncherConfiguration configuration, Project project) throws GradleException {
+    public void execute(String buildPath, LauncherConfiguration configuration, AutomatedComparisonConfig loadedAutoConfiguration, Project project) throws GradleException {
         long start = System.currentTimeMillis();
         project.getLogger()
                 .lifecycle("-----------------------------------------------------------------------------------------");
@@ -112,6 +117,16 @@ public class Launcher implements Plugin<Project> {
                 .lifecycle("-----------------------------------------------------------------------------------------");
         System.setProperty("collectHw", "true");
         boolean isReportSentSuccessFully = false;
+
+        ComparisonConfig automatedComparisonCfg;
+        try {
+            automatedComparisonCfg = checkConfigValidity(project, loadedAutoConfiguration);
+            project.getLogger().lifecycle("** Configuration loaded: automated comparison configuration");
+        } catch (Exception e) {
+            automatedComparisonCfg = null;
+            project.getLogger().error("Failed to parse automated comparison configuration", e);
+        }
+
         try {
             project.getLogger().lifecycle("Collecting hardware, software information...");
             HardwareProperties hwProperties = CollectSystemInformation.getEnvironmentProperties();
@@ -133,7 +148,7 @@ public class Launcher implements Plugin<Project> {
             benchmarkSettings.put("benchThreadCount", configuration.getThreads());
             benchmarkSettings.put("benchReportName", configuration.getReportName());
 
-            BenchmarkRunner.checkProjectMetadataExists();
+            Map<String, String> PROJECT_METADATA_MAP = BenchmarkRunner.checkProjectMetadataExists();
 
             project.getLogger().lifecycle("Executing benchmarks...");
 
@@ -196,6 +211,17 @@ public class Launcher implements Plugin<Project> {
             report.getEnvironmentSettings().put("userDefinedProperties",
                     ComputationUtils.customUserDefinedProperties(configuration.getUserProperties()));
             report.setBenchmarkSettings(benchmarkSettings);
+
+             if (automatedComparisonCfg != null) {
+                 if (automatedComparisonCfg.getScope().equals(ComparisonConfig.Scope.WITHIN)) {
+                     automatedComparisonCfg.setCompareVersion(PROJECT_METADATA_MAP.get(Constants.PROJECT_VERSION));
+                 }
+                 automatedComparisonCfg.setRange(String.valueOf(automatedComparisonCfg.getCompareLatestReports()));
+                 automatedComparisonCfg.setProjectName(PROJECT_METADATA_MAP.get(Constants.PROJECT_NAME));
+                 automatedComparisonCfg.setProjectVersion(PROJECT_METADATA_MAP.get(Constants.PROJECT_VERSION));
+                 report.setAutomatedComparisonConfig(automatedComparisonCfg);
+             }
+
             URL[] urlsArray = PluginUtils.getUrlsArray(project);
             for (String s : report.getBenchmarks().keySet()) {
                 List<BenchmarkReport> custom = new ArrayList<>(report.getBenchmarks().get(s));
@@ -292,6 +318,14 @@ public class Launcher implements Plugin<Project> {
                 project.getLogger().lifecycle("You can find all device benchmarks on {}", deviceReports);
                 project.getLogger().lifecycle("Your report is available at {}", resultURL);
                 project.getLogger().lifecycle("NOTE: It may take a few minutes for your report to appear online");
+
+                if (response.containsKey("automatedComparisons")) {
+                    List<Map<String, Object>> automatedComparisons = (List<Map<String, Object>>) response
+                            .get("automatedComparisons");
+                    if (BenchmarkRunner.tooManyAnomalies(automatedComparisons)) {
+                        System.exit(1);
+                    }
+                }
             } else {
                 String errMsg = BenchmarkRunner.getErrorResponseMessage(response);
                 if (errMsg != null) {
@@ -323,4 +357,106 @@ public class Launcher implements Plugin<Project> {
         }
     }
 
+    public ComparisonConfig checkConfigValidity(Project project, AutomatedComparisonConfig automatedComparisonConfig) throws Exception {
+        ComparisonConfig verifiedComparisonConfig = new ComparisonConfig();
+
+        String SCOPE_STR = automatedComparisonConfig.getScope();
+        if (StringUtils.isBlank(SCOPE_STR)) {
+            throw new Exception("Scope is not specified!");
+        } else {
+            SCOPE_STR = SCOPE_STR.toUpperCase();
+        }
+        ComparisonConfig.Scope SCOPE;
+        String COMPARE_VERSION = automatedComparisonConfig.getCompareVersion();
+        Integer NUM_LATEST_REPORTS = automatedComparisonConfig.getNumLatestReports();
+        Integer ANOMALIES_ALLOWED = automatedComparisonConfig.getAnomaliesAllowed();
+        String METHOD_STR = automatedComparisonConfig.getMethod();
+        if (StringUtils.isBlank(METHOD_STR)) {
+            throw new Exception("Method is not specified!");
+        } else {
+            METHOD_STR = METHOD_STR.toUpperCase();
+        }
+        ComparisonConfig.Method METHOD;
+        String THRESHOLD_STR = automatedComparisonConfig.getThreshold();
+        if (StringUtils.isNotBlank(THRESHOLD_STR)) {
+            THRESHOLD_STR = THRESHOLD_STR.toUpperCase();
+        }
+        ComparisonConfig.Threshold THRESHOLD;
+        Double PERCENT_CHANGE_ALLOWED = automatedComparisonConfig.getPercentChangeAllowed();
+        Double DEVIATIONS_ALLOWED = automatedComparisonConfig.getDeviationsAllowed();
+
+        if (NUM_LATEST_REPORTS != null) {
+            if (NUM_LATEST_REPORTS < 1) {
+                throw new Exception("Not enough latest reports specified to compare to!");
+            }
+            verifiedComparisonConfig.setCompareLatestReports(NUM_LATEST_REPORTS);
+        } else {
+            throw new Exception("Number of latest reports to compare to was not specified!");
+        }
+        if (ANOMALIES_ALLOWED != null) {
+            if (ANOMALIES_ALLOWED < 1) {
+                throw new Exception("Not enough anomalies allowed specified!");
+            }
+            verifiedComparisonConfig.setAnomaliesAllowed(ANOMALIES_ALLOWED);
+        } else {
+            throw new Exception("Anomalies allowed was not specified!");
+        }
+
+        if (!EnumUtils.isValidEnum(ComparisonConfig.Scope.class, SCOPE_STR)) {
+            throw new Exception("Scope is invalid!");
+        } else {
+            SCOPE = ComparisonConfig.Scope.valueOf(SCOPE_STR);
+            verifiedComparisonConfig.setScope(SCOPE);
+        }
+        if (!EnumUtils.isValidEnum(ComparisonConfig.Method.class, METHOD_STR)) {
+            throw new Exception("Method is invalid!");
+        } else {
+            METHOD = ComparisonConfig.Method.valueOf(METHOD_STR);
+            verifiedComparisonConfig.setMethod(METHOD);
+        }
+
+        if (SCOPE.equals(ComparisonConfig.Scope.WITHIN) && StringUtils.isNotEmpty(COMPARE_VERSION)) {
+            COMPARE_VERSION = "";
+            project.getLogger().warn(
+                    "Automated comparison config scoped specified as WITHIN but compare version was also specified, will compare WITHIN the currently tested version.");
+        } else if (SCOPE.equals(ComparisonConfig.Scope.BETWEEN) && StringUtils.isBlank(COMPARE_VERSION)) {
+            throw new Exception("Scope specified as BETWEEN but no compare version specified!");
+        } else if (SCOPE.equals(ComparisonConfig.Scope.BETWEEN)) {
+            verifiedComparisonConfig.setCompareVersion(COMPARE_VERSION);
+        }
+
+        if (METHOD.equals(ComparisonConfig.Method.SD)) {
+            if (DEVIATIONS_ALLOWED != null) {
+                if (DEVIATIONS_ALLOWED <= 0) {
+                    throw new Exception("Method specified as SD but not enough deviations allowed were specified!");
+                }
+                verifiedComparisonConfig.setDeviationsAllowed(DEVIATIONS_ALLOWED);
+            } else {
+                throw new Exception("Method specified as SD but deviations allowed was not specified!");
+            }
+        } else if (METHOD.equals(ComparisonConfig.Method.DELTA)) {
+            if (!EnumUtils.isValidEnum(ComparisonConfig.Threshold.class, THRESHOLD_STR) || StringUtils.isBlank(THRESHOLD_STR)) {
+                throw new Exception(
+                        "Method specified as DELTA but no threshold specified or threshold is invalid!");
+            } else {
+                THRESHOLD = ComparisonConfig.Threshold.valueOf(THRESHOLD_STR);
+                verifiedComparisonConfig.setThreshold(THRESHOLD);
+            }
+
+            if (THRESHOLD.equals(ComparisonConfig.Threshold.PERCENT_CHANGE)) {
+                if (PERCENT_CHANGE_ALLOWED != null) {
+                    if (PERCENT_CHANGE_ALLOWED <= 0) {
+                        throw new Exception(
+                                "Threshold specified as PERCENT_CHANGE but percent change is not high enough!");
+                    }
+                    verifiedComparisonConfig.setPercentChangeAllowed(PERCENT_CHANGE_ALLOWED);
+                } else {
+                    throw new Exception(
+                            "Threshold specified as PERCENT_CHANGE but percent change allowed was not specified!");
+                }
+            }
+        }
+
+        return verifiedComparisonConfig;
+    }
 }
