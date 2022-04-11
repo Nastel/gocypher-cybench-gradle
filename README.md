@@ -108,7 +108,9 @@ Plugin is configurable inside cybenchJMH{} tag. Properties available for plugin 
 | **email** | Email property is used to identify report sender while sending reports to both private and public repositories | - |
 | **shouldFailBuildOnReportDeliveryFailure**| A flag which triggers build failure if the benchmark report was configured to be sent to CyBench but its delivery failed. |   false  |
 
-You can also add a configuration for automated performance regression testing, which will run with every single benchmark report. This is configurable inside the cybenchAutomation{} tag.
+You can also add a configuration for automated performance regression testing, which will run with every single benchmark report. This is configurable inside the cybenchAutomation{} tag. 
+  
+**NOTE** In order to run automated comparisons, you must add the **benchQueryToken** to the cybenchJMH{} configuration.
 
 | Property name        | Description           | Options  |
 | ------------- |-------------| -----:|
