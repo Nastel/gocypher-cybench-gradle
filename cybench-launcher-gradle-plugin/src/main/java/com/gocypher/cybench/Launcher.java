@@ -26,7 +26,6 @@ import java.net.URLClassLoader;
 import java.text.MessageFormat;
 import java.util.*;
 
-import com.gocypher.cybench.utils.AutomatedComparisonConfig;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.gradle.api.GradleException;
@@ -59,10 +58,11 @@ import com.gocypher.cybench.launcher.report.ReportingService;
 import com.gocypher.cybench.launcher.utils.ComputationUtils;
 import com.gocypher.cybench.launcher.utils.Constants;
 import com.gocypher.cybench.launcher.utils.SecurityBuilder;
+import com.gocypher.cybench.model.ComparisonConfig;
+import com.gocypher.cybench.utils.AutomatedComparisonConfig;
 import com.gocypher.cybench.utils.LauncherConfiguration;
 import com.gocypher.cybench.utils.PluginConstants;
 import com.gocypher.cybench.utils.PluginUtils;
-import com.gocypher.cybench.model.ComparisonConfig;
 
 public class Launcher implements Plugin<Project> {
 
@@ -73,7 +73,8 @@ public class Launcher implements Plugin<Project> {
             configuration.setReportName(MessageFormat.format("Benchmark for {0}:{1}:{2}", project.getGroup(),
                     project.getName(), project.getVersion()));
         }
-        AutomatedComparisonConfig loadedAutoConfiguration = project.getExtensions().create("cybenchAutomation", AutomatedComparisonConfig.class);
+        AutomatedComparisonConfig loadedAutoConfiguration = project.getExtensions().create("cybenchAutomation",
+                AutomatedComparisonConfig.class);
 
         SourceSet sourceSets = project.getConvention().getPlugin(JavaPluginConvention.class).getSourceSets()
                 .getAt("main");
@@ -86,7 +87,8 @@ public class Launcher implements Plugin<Project> {
         }
     }
 
-    public void cybenchJMHReflectiveTask(Project project, SourceSet sourceSets, LauncherConfiguration configuration, AutomatedComparisonConfig loadedAutoConfiguration) {
+    public void cybenchJMHReflectiveTask(Project project, SourceSet sourceSets, LauncherConfiguration configuration,
+            AutomatedComparisonConfig loadedAutoConfiguration) {
         StringBuilder classpath = new StringBuilder();
         String buildPath = String.valueOf(project.getBuildDir());
         String testBuildPath = project.getBuildDir() + PluginConstants.TEST_SOURCE_ROOT;
@@ -107,7 +109,9 @@ public class Launcher implements Plugin<Project> {
         });
     }
 
-    public void execute(String buildPath, LauncherConfiguration configuration, AutomatedComparisonConfig loadedAutoConfiguration, Project project) throws GradleException {
+    @SuppressWarnings("unchecked")
+    public void execute(String buildPath, LauncherConfiguration configuration,
+            AutomatedComparisonConfig loadedAutoConfiguration, Project project) throws GradleException {
         long start = System.currentTimeMillis();
         project.getLogger()
                 .lifecycle("-----------------------------------------------------------------------------------------");
@@ -212,15 +216,15 @@ public class Launcher implements Plugin<Project> {
                     ComputationUtils.customUserDefinedProperties(configuration.getUserProperties()));
             report.setBenchmarkSettings(benchmarkSettings);
 
-             if (automatedComparisonCfg != null) {
-                 if (automatedComparisonCfg.getScope().equals(ComparisonConfig.Scope.WITHIN)) {
-                     automatedComparisonCfg.setCompareVersion(PROJECT_METADATA_MAP.get(Constants.PROJECT_VERSION));
-                 }
-                 automatedComparisonCfg.setRange(String.valueOf(automatedComparisonCfg.getCompareLatestReports()));
-                 automatedComparisonCfg.setProjectName(PROJECT_METADATA_MAP.get(Constants.PROJECT_NAME));
-                 automatedComparisonCfg.setProjectVersion(PROJECT_METADATA_MAP.get(Constants.PROJECT_VERSION));
-                 report.setAutomatedComparisonConfig(automatedComparisonCfg);
-             }
+            if (automatedComparisonCfg != null) {
+                if (automatedComparisonCfg.getScope().equals(ComparisonConfig.Scope.WITHIN)) {
+                    automatedComparisonCfg.setCompareVersion(PROJECT_METADATA_MAP.get(Constants.PROJECT_VERSION));
+                }
+                automatedComparisonCfg.setRange(String.valueOf(automatedComparisonCfg.getCompareLatestReports()));
+                automatedComparisonCfg.setProjectName(PROJECT_METADATA_MAP.get(Constants.PROJECT_NAME));
+                automatedComparisonCfg.setProjectVersion(PROJECT_METADATA_MAP.get(Constants.PROJECT_VERSION));
+                report.setAutomatedComparisonConfig(automatedComparisonCfg);
+            }
 
             URL[] urlsArray = PluginUtils.getUrlsArray(project);
             for (String s : report.getBenchmarks().keySet()) {
@@ -329,7 +333,7 @@ public class Launcher implements Plugin<Project> {
             } else {
                 String errMsg = BenchmarkRunner.getErrorResponseMessage(response);
                 if (errMsg != null) {
-                    project.getLogger().error(errMsg);
+                    project.getLogger().error("CyBench backend service sent error response: {}", errMsg);
                 }
                 project.getLogger().lifecycle("You may submit your report '"
                         + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE)
@@ -346,8 +350,9 @@ public class Launcher implements Plugin<Project> {
 
             project.getLogger().lifecycle(
                     "-----------------------------------------------------------------------------------------");
-            project.getLogger().lifecycle("         Finished CyBench benchmarking ("
-                    + ComputationUtils.formatInterval(System.currentTimeMillis() - start) + ")");
+            project.getLogger().lifecycle(
+                    "                      Finished CyBench benchmarking ({})                                 ",
+                    ComputationUtils.formatInterval(System.currentTimeMillis() - start));
             project.getLogger().lifecycle(
                     "-----------------------------------------------------------------------------------------");
         }
@@ -357,7 +362,8 @@ public class Launcher implements Plugin<Project> {
         }
     }
 
-    public ComparisonConfig checkConfigValidity(Project project, AutomatedComparisonConfig automatedComparisonConfig) throws Exception {
+    public ComparisonConfig checkConfigValidity(Project project, AutomatedComparisonConfig automatedComparisonConfig)
+            throws Exception {
         ComparisonConfig verifiedComparisonConfig = new ComparisonConfig();
 
         String SCOPE_STR = automatedComparisonConfig.getScope();
@@ -435,9 +441,9 @@ public class Launcher implements Plugin<Project> {
                 throw new Exception("Method specified as SD but deviations allowed was not specified!");
             }
         } else if (METHOD.equals(ComparisonConfig.Method.DELTA)) {
-            if (!EnumUtils.isValidEnum(ComparisonConfig.Threshold.class, THRESHOLD_STR) || StringUtils.isBlank(THRESHOLD_STR)) {
-                throw new Exception(
-                        "Method specified as DELTA but no threshold specified or threshold is invalid!");
+            if (!EnumUtils.isValidEnum(ComparisonConfig.Threshold.class, THRESHOLD_STR)
+                    || StringUtils.isBlank(THRESHOLD_STR)) {
+                throw new Exception("Method specified as DELTA but no threshold specified or threshold is invalid!");
             } else {
                 THRESHOLD = ComparisonConfig.Threshold.valueOf(THRESHOLD_STR);
                 verifiedComparisonConfig.setThreshold(THRESHOLD);

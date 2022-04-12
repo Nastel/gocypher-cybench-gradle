@@ -108,9 +108,10 @@ Plugin is configurable inside cybenchJMH{} tag. Properties available for plugin 
 | **email** | Email property is used to identify report sender while sending reports to both private and public repositories | - |
 | **shouldFailBuildOnReportDeliveryFailure**| A flag which triggers build failure if the benchmark report was configured to be sent to CyBench but its delivery failed. |   false  |
 
-You can also add a configuration for automated performance regression testing, which will run with every single benchmark report. This is configurable inside the cybenchAutomation{} tag. 
+You can also add a configuration for automated performance regression testing, which will run with every single
+benchmark report. This is configurable inside the `cybenchAutomation{}` tag. 
   
-**NOTE** In order to run automated comparisons, you must add the **benchQueryToken** to the cybenchJMH{} configuration.
+**NOTE** In order to run automated comparisons, you must add the **benchQueryToken** to the `cybenchJMH{}` configuration.
 
 | Property name        | Description           | Options  |
 | ------------- |-------------| -----:|
@@ -122,7 +123,6 @@ You can also add a configuration for automated performance regression testing, w
 | **threshold** | Only used with the `DELTA` method. `GREATER` will compare raw scores, `PERCENT_CHANGE` is used to measure the percent change of the score in comparison to previous scores. `PERCENT_CHANGE` requires an additional property: `percentChangeAllowed`. | `GREATER` or `PERCENT_CHANGE` |
 | **percentChangeAllowed** | This argument is used when running assertions, makes sure your new score is within X percent of the previous scores you're comparing to. | Any Double value. |
 | **deviationsAllowed** | Used with assertions to check that the new score is within the given amount of deviations from the mean. (mean being calculated from the scores being compared to). | Any Double value. |
-
 
 ### Example of Full CyBench Gradle plugin configuration
 
