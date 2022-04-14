@@ -53,6 +53,7 @@ import com.gocypher.cybench.launcher.environment.model.JVMProperties;
 import com.gocypher.cybench.launcher.environment.services.CollectSystemInformation;
 import com.gocypher.cybench.launcher.model.BenchmarkOverviewReport;
 import com.gocypher.cybench.launcher.model.BenchmarkReport;
+import com.gocypher.cybench.launcher.model.TooManyAnomaliesException;
 import com.gocypher.cybench.launcher.report.DeliveryService;
 import com.gocypher.cybench.launcher.report.ReportingService;
 import com.gocypher.cybench.launcher.utils.ComputationUtils;
@@ -326,9 +327,7 @@ public class Launcher implements Plugin<Project> {
                 if (response.containsKey("automatedComparisons")) {
                     List<Map<String, Object>> automatedComparisons = (List<Map<String, Object>>) response
                             .get("automatedComparisons");
-                    if (BenchmarkRunner.tooManyAnomalies(automatedComparisons)) {
-                        System.exit(1);
-                    }
+                    BenchmarkRunner.verifyAnomalies(automatedComparisons);
                 }
             } else {
                 String errMsg = BenchmarkRunner.getErrorResponseMessage(response);
@@ -339,6 +338,8 @@ public class Launcher implements Plugin<Project> {
                         + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE)
                         + "' manually at " + Constants.CYB_UPLOAD_URL);
             }
+        } catch (TooManyAnomaliesException e) {
+            throw new GradleException("Too many anomalies found during benchmarks run: " + e.getMessage());
         } catch (Throwable t) {
             if (t.getMessage() != null && t.getMessage().contains("/META-INF/BenchmarkList")) {
                 project.getLogger().warn("-------------------No benchmark tests found-------------------");
