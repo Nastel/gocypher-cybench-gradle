@@ -152,10 +152,10 @@ repositories {
 
 dependencies {
     testImplementation 'junit:junit:4.13.2'
-    implementation 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.3'
-    annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.3'
+    implementation 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.4'
+    annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.4'
     // if benchmarks are in test directory
-    testAnnotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.3'
+    testAnnotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.4'
 
     implementation 'org.openjdk.jmh:jmh-core:1.34'
     annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.34'
@@ -205,21 +205,21 @@ ant.propertyfile(file: "${projectDir}/config/project.properties") {
 Install annotation binaries into your local Maven repository
 
 ```sh
-mvn install:install-file -Dfile=gocypher-cybench-annotations-1.3.3.jar -DgroupId=com.gocypher.cybench.client -DartifactId=gocypher-cybench-annotations -Dversion=1.3.3 -Dpackaging=jar
+mvn install:install-file -Dfile=gocypher-cybench-annotations-1.3.4.jar -DgroupId=com.gocypher.cybench.client -DartifactId=gocypher-cybench-annotations -Dversion=1.3.4 -Dpackaging=jar
 ```
 
 Include dependency to annotation processor in your project `build.gradle` file.
 
 ```groovy
-implementation 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.3'
+implementation 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.4'
 ```
 
 **Notice:** if you want for the tags to be auto generated on your projects you should add annotationProcessor or
 testAnnotationProcessor. First launch will generate the annotations for benchmarks and fail build.
 
 ```groovy
-annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.3'
-testAnnotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.3'
+annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.4'
+testAnnotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.4'
 ```
 
 ## More information on benchmarking your code
