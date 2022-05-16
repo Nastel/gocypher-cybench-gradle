@@ -207,7 +207,6 @@ public class Launcher implements Plugin<Project> {
             Collection<RunResult> results = runner.run();
             BenchmarkOverviewReport report = ReportingService.getInstance().createBenchmarkReport(results,
                     customBenchmarksMetadata);
-            report.updateUploadStatus(configuration.getReportUploadStatus());
 
             report.getEnvironmentSettings().put("environment", hwProperties);
             report.getEnvironmentSettings().put("jvmEnvironment", jvmProperties);
@@ -259,7 +258,7 @@ public class Launcher implements Plugin<Project> {
                     }
                 }
                 report.computeScores();
-                // BenchmarkRunner.getReportUploadStatus(report);
+                report.updateUploadStatus(configuration.getReportUploadStatus());
             }
 
             project.getLogger().lifecycle(
@@ -318,6 +317,11 @@ public class Launcher implements Plugin<Project> {
             IOUtils.removeTestDataFiles();
             project.getLogger().lifecycle("Removed all temporary auto-generated files!!!");
 
+            if (!response.isEmpty() && report.getUploadStatus().equals(Constants.REPORT_PRIVATE)) {
+                project.getLogger().error("*** Total Reports allowed in repository: {}", response.get(Constants.REPORTS_ALLOWED_FROM_SUB));
+                project.getLogger().error("*** Total Reports already in repository: {}", response.get(Constants.NUM_REPORTS_IN_REPO));
+            }
+
             if (!response.isEmpty() && !BenchmarkRunner.isErrorResponse(response)) {
                 project.getLogger().lifecycle("Benchmark report submitted successfully to {}", Constants.REPORT_URL);
                 project.getLogger().lifecycle("You can find all device benchmarks on {}", deviceReports);
@@ -334,9 +338,13 @@ public class Launcher implements Plugin<Project> {
                 if (errMsg != null) {
                     project.getLogger().error("CyBench backend service sent error response: {}", errMsg);
                 }
-                project.getLogger().lifecycle("You may submit your report '"
+                if (BenchmarkRunner.getAllowedToUploadBasedOnSubscription(response)) {
+                    // user was allowed to upload report, and there was still an error
+                    project.getLogger().lifecycle("You may submit your report '"
                         + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE)
                         + "' manually at " + Constants.CYB_UPLOAD_URL);
+                }
+                
             }
         } catch (TooManyAnomaliesException e) {
             throw new GradleException("Too many anomalies found during benchmarks run: " + e.getMessage());
