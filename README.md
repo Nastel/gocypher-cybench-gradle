@@ -45,9 +45,9 @@ apply plugin: 'cybench-launcher-gradle-plugin'
   framework.
 
   ```groovy
-  implementation 'org.openjdk.jmh:jmh-core:1.34'
-  annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.34'
-  testAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.34'
+  implementation 'org.openjdk.jmh:jmh-core:1.35'
+  annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.35'
+  testAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.35'
   ```
 
 * Project must also have a project.properties file in order for CyBench runner to correctly generate metadata associated
@@ -157,10 +157,10 @@ dependencies {
     // if benchmarks are in test directory
     testAnnotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.5'
 
-    implementation 'org.openjdk.jmh:jmh-core:1.34'
-    annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.34'
+    implementation 'org.openjdk.jmh:jmh-core:1.35'
+    annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.35'
     // if benchmarks are in test directory
-    testAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.34'
+    testAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.35'
 }
 
 /* below the dependencies tag inside the build.gradle */
