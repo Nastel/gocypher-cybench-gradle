@@ -151,7 +151,8 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+    testImplementation 'org.junit.vintage:junit-vintage-engine:5.8.2'
     implementation 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.5'
     annotationProcessor 'com.gocypher.cybench.client:gocypher-cybench-annotations:1.3.5'
     // if benchmarks are in test directory
