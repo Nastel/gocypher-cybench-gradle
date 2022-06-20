@@ -263,7 +263,7 @@ public class Launcher implements Plugin<Project> {
 
             project.getLogger().lifecycle(
                     "-----------------------------------------------------------------------------------------");
-            project.getLogger().lifecycle("      Report score - " + report.getTotalScore());
+            project.getLogger().lifecycle("      Report score - {}", report.getTotalScore());
             project.getLogger().lifecycle(
                     "-----------------------------------------------------------------------------------------");
             if (configuration.getExpectedScore() > 0) {
@@ -309,9 +309,9 @@ public class Launcher implements Plugin<Project> {
                     reportFilePath = PluginConstants.DEFAULT_FILE_SAVE_LOCATION + reportFilePath;
                     reportCybFilePath = PluginConstants.DEFAULT_FILE_SAVE_LOCATION + reportCybFilePath;
                 }
-                project.getLogger().lifecycle("Saving test results to '" + reportFilePath + "'");
+                project.getLogger().lifecycle("Saving test results to '{}'", reportFilePath);
                 IOUtils.storeResultsToFile(reportFilePath, reportJSON);
-                project.getLogger().lifecycle("Saving encrypted test results to '" + reportCybFilePath + "'");
+                project.getLogger().lifecycle("Saving encrypted test results to '{}'", reportCybFilePath);
                 IOUtils.storeResultsToFile(reportCybFilePath, reportEncrypted);
             }
             IOUtils.removeTestDataFiles();
@@ -342,11 +342,9 @@ public class Launcher implements Plugin<Project> {
                 }
                 if (BenchmarkRunner.getAllowedToUploadBasedOnSubscription(response)) {
                     // user was allowed to upload report, and there was still an error
-                    project.getLogger()
-                            .lifecycle("You may submit your report '"
-                                    + IOUtils.getReportsPath(configuration.getReportsFolder(),
-                                            Constants.CYB_REPORT_CYB_FILE)
-                                    + "' manually at " + Constants.CYB_UPLOAD_URL);
+                    project.getLogger().lifecycle("You may submit your report '{}' manually at {}",
+                            IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE),
+                            Constants.CYB_UPLOAD_URL);
                 }
 
             }
