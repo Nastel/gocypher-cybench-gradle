@@ -80,11 +80,12 @@ public final class PluginUtils {
                     }
                 }
                 for (Method method : javaClass.getMethods()) {
+                    String fKey = cls.getName() + "." + method.getName();
                     try {
                         if (benchmarkMethods.contains(method.getName())) {
                             String hash = SecurityUtils.hashByteArray(concatArrays(method.getName().getBytes(),
                                     method.getSignature().getBytes(), method.getCode().getCode()));
-                            generatedFingerprints.put(cls.getName() + "." + method.getName(), hash);
+                            generatedFingerprints.put(fKey, hash);
                         }
                     } catch (Exception e) {
                         project.getLogger().error("Failed to compute hash for method {} in class {}", method.getName(),
@@ -94,6 +95,7 @@ public final class PluginUtils {
                 String classHash = computeClassHash(cls, project);
                 java.lang.reflect.Method[] methods = cls.getMethods();
                 for (java.lang.reflect.Method method : methods) {
+                    String fKey = cls.getName() + "." + method.getName();
                     if (method.getAnnotation(benchmarkAnnotationClass) != null) {
                         if (cl.findResource(PluginConstants.BENCHMARK_TAG) != null) {
                             Class benchmarkAnnotationTagClass = cl.loadClass(PluginConstants.BENCHMARK_TAG);
@@ -104,11 +106,20 @@ public final class PluginUtils {
                                     String result = StringUtils.substringBetween(annotation.toString(), "(", ")");
                                     tag = result.replace("tag=", "");
                                 }
-                                manualFingerprints.put(cls.getName() + "." + method.getName(), tag);
+                                manualFingerprints.put(fKey, tag);
+                            } else {
+                                Method javaMethod = javaClass.getMethod(method);
+                                if (javaMethod != null) {
+                                    String methodSignature = javaClass.getClassName() + "." + javaMethod.getName()
+                                            + javaMethod.getGenericSignature();
+                                    String hash = SecurityUtils.computeStringHash(methodSignature);
+                                    project.getLogger().info("Computed method {} hash {}", methodSignature, hash);
+                                    manualFingerprints.put(fKey, hash);
+                                }
                             }
                         }
                     }
-                    classFingerprints.put(cls.getName() + "." + method.getName(), classHash);
+                    classFingerprints.put(fKey, classHash);
                 }
             }
         } catch (Exception exc) {
