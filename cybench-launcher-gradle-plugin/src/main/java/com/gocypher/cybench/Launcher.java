@@ -20,6 +20,7 @@
 package com.gocypher.cybench;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -68,6 +69,8 @@ import com.gocypher.cybench.utils.PluginUtils;
 
 public class Launcher implements Plugin<Project> {
 
+	static boolean shouldFail;
+	
     @Override
     public void apply(Project project) {
         LauncherConfiguration configuration = project.getExtensions().create("cybenchJMH", LauncherConfiguration.class);
@@ -80,6 +83,7 @@ public class Launcher implements Plugin<Project> {
 
         SourceSet sourceSets = project.getConvention().getPlugin(JavaPluginConvention.class).getSourceSets()
                 .getAt("main");
+        checkConfigFileAndOverride(configuration, project);
 
         try {
             cybenchJMHReflectiveTask(project, sourceSets, configuration, loadedAutoConfiguration);
@@ -121,7 +125,6 @@ public class Launcher implements Plugin<Project> {
         project.getLogger()
                 .lifecycle("-----------------------------------------------------------------------------------------");
         System.setProperty("collectHw", "true");
-
         ComparisonConfig automatedComparisonCfg;
         try {
             automatedComparisonCfg = checkConfigValidity(project, loadedAutoConfiguration);
@@ -142,7 +145,7 @@ public class Launcher implements Plugin<Project> {
             Map<String, Object> benchmarkSettings = new HashMap<>();
             Map<String, Map<String, String>> customBenchmarksMetadata = ComputationUtils
                     .parseBenchmarkMetadata(configuration.getUserProperties());
-
+ 
             benchmarkSettings.put("benchSource", PluginConstants.BENCH_SOURCE);
             benchmarkSettings.put("benchWarmUpIteration", configuration.getWarmUpIterations());
             benchmarkSettings.put("benchWarmUpSeconds", configuration.getWarmUpSeconds());
@@ -161,8 +164,6 @@ public class Launcher implements Plugin<Project> {
             buildOptions(benchContext, configuration);
 
             Collection<RunResult> results = runBenchmarks(benchContext, buildPath, project);
-
-            project.getLogger().info("Benchmark finished, executed tests count: {}", results.size());
 
             BenchmarkOverviewReport report = processResults(benchContext, benchmarkSettings, results, project,
                     configuration);
@@ -192,12 +193,77 @@ public class Launcher implements Plugin<Project> {
             throw new GradleException("Error during benchmarks run, report was not sent to CyBench as configured!");
         }
     }
+    
+    private void checkConfigFileAndOverride(LauncherConfiguration configuration, Project project) {
+    	try {
+    		Properties tempProps = new Properties();
+    		tempProps.load(new FileInputStream(project.getProjectDir() + "/config/cybench-launcher.properties"));
+    		if (!tempProps.isEmpty()) {
+    			overrideConfiguration(configuration, tempProps);
+    		}
+    		
+    	} catch (Exception e) {
+    		project.getLogger().lifecycle("Error attempting to load cybench-launcher.properties.");
+    	}
+    }
+    
+    private void overrideConfiguration(LauncherConfiguration configuration, Properties props) {
+    	
+		if (checkExistsAndNotNull(props, "sendReport")) {
+			configuration.setShouldSendReportToCyBench(Boolean.parseBoolean(props.getProperty("sendReport")));
+		}
+		if (checkExistsAndNotNull(props, "reportName")) {
+			configuration.setReportName((String) props.getProperty("reportName"));
+		}
+		if (checkExistsAndNotNull(props, "benchAccessToken")) {
+			configuration.setBenchAccessToken(props.getProperty("benchAccessToken"));
+
+		}
+		if (checkExistsAndNotNull(props, "benchQueryToken")) {
+			configuration.setBenchQueryToken(props.getProperty("benchQueryToken"));
+		}
+		if (checkExistsAndNotNull(props, "emailAddress")) {
+			configuration.setEmail(props.getProperty("emailAddress")); 
+
+		}
+		if (checkExistsAndNotNull(props, "reportUploadStatus")) {
+			configuration.setReportUploadStatus(props.getProperty("reportUploadStatus"));
+		}
+		
+		overrideJMHConfiguration(configuration , props);
+    }
+    
+    private void overrideJMHConfiguration(LauncherConfiguration configuration, Properties props) {
+    	
+		if (checkExistsAndNotNull(props, "warmUpIterations")) {
+			configuration.setWarmUpIterations(Integer.parseInt(props.getProperty("warmUpIterations")));
+		}
+		if (checkExistsAndNotNull(props, "measurementIterations")) {
+			configuration.setMeasurementIterations(Integer.parseInt(props.getProperty("measurementIterations")));
+		}
+		if (checkExistsAndNotNull(props, "warmUpSeconds")) {
+			configuration.setWarmUpSeconds(Integer.parseInt(props.getProperty("warmUpSeconds")));
+		}
+		if (checkExistsAndNotNull(props, "numberOfBenchmarkForks")) {
+			configuration.setForks(Integer.parseInt(props.getProperty("numberOfBenchmarkForks")));
+		}
+		if (checkExistsAndNotNull(props, "runThreadCount")) {
+			configuration.setThreads(Integer.parseInt(props.getProperty("runThreadCount")));
+		}
+		if (checkExistsAndNotNull(props, "measurementSeconds")) {
+			configuration.setMeasurementSeconds(Integer.parseInt(props.getProperty("measurementSeconds")));
+		}
+		
+    }
 
     public void initContext(BenchmarkingContext benchContext, Project project) {
         project.getLogger().lifecycle("Collecting hardware, software information...");
         benchContext.setHWProperties(CollectSystemInformation.getEnvironmentProperties());
         project.getLogger().lifecycle("Collecting JVM properties...");
         benchContext.setJVMProperties(CollectSystemInformation.getJavaVirtualMachineProperties());
+        
+        benchContext.setDefaultBenchmarksMetadata(
+                ComputationUtils.parseBenchmarkMetadata(benchContext.getProperty(Constants.BENCHMARK_METADATA)));
     }
 
     public void buildOptions(BenchmarkingContext benchContext, LauncherConfiguration configuration) {
@@ -262,8 +328,15 @@ public class Launcher implements Plugin<Project> {
     public BenchmarkOverviewReport processResults(BenchmarkingContext benchContext,
             Map<String, Object> benchmarkSettings, Collection<RunResult> results, Project project,
             LauncherConfiguration configuration) {
-        BenchmarkOverviewReport report = ReportingService.getInstance().createBenchmarkReport(results,
+        List<BenchmarkReport> benchReports;
+        BenchmarkOverviewReport report;
+
+        report = ReportingService.getInstance().createBenchmarkReport(results,
                 benchContext.getDefaultBenchmarksMetadata());
+
+        benchContext.setReport(report);
+        benchReports = report.getBenchmarksList();
+        
 
         report.getEnvironmentSettings().put("environment", benchContext.getHWProperties());
         report.getEnvironmentSettings().put("jvmEnvironment", benchContext.getJVMProperties());
@@ -285,6 +358,8 @@ public class Launcher implements Plugin<Project> {
         }
 
         URL[] urlsArray = PluginUtils.getUrlsArray(project);
+      
+        
         for (String s : report.getBenchmarks().keySet()) {
             List<BenchmarkReport> custom = new ArrayList<>(report.getBenchmarks().get(s));
             custom.forEach(benchmarkReport -> {
@@ -300,6 +375,7 @@ public class Launcher implements Plugin<Project> {
                     Optional<Method> benchmarkMethod = JMHUtils.getBenchmarkMethod(method, aClass);
                     PluginUtils.appendMetadataFromAnnotated(benchmarkMethod, benchmarkReport, project, cl);
                     PluginUtils.appendMetadataFromAnnotated(Optional.of(aClass), benchmarkReport, project, cl);
+                                        
                     BenchmarkRunner.syncReportsMetadata(benchContext, report, benchmarkReport);
                 } catch (Exception exc) {
                     project.getLogger().error("Class not found in the classpath for execution", exc);
@@ -368,9 +444,9 @@ public class Launcher implements Plugin<Project> {
                 report.setReportURL(resultURL);
             }
         } else {
-            // project.getLogger().lifecycle("You may submit your report '"
-            // + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE)
-            // + "' manually at " + Constants.CYB_UPLOAD_URL);
+             project.getLogger().lifecycle("You may submit your report '"
+             + IOUtils.getReportsPath(configuration.getReportsFolder(), Constants.CYB_REPORT_CYB_FILE)
+             + "' manually at " + Constants.CYB_UPLOAD_URL);
         }
         String reportJSON = JSONUtils.marshalToPrettyJson(report);
         // project.getLogger().lifecycle(reportJSON);
@@ -399,7 +475,6 @@ public class Launcher implements Plugin<Project> {
             project.getLogger().error("*** Total Reports already in repository: {}",
                     response.get(Constants.NUM_REPORTS_IN_REPO));
         }
-
         if (!response.isEmpty() && !BenchmarkRunner.isErrorResponse(response)) {
             project.getLogger().lifecycle("Benchmark report submitted successfully to {}", Constants.REPORT_URL);
             project.getLogger().lifecycle("You can find all device benchmarks on {}", deviceReports);
@@ -409,7 +484,7 @@ public class Launcher implements Plugin<Project> {
             if (response.containsKey("automatedComparisons")) {
                 List<Map<String, Object>> automatedComparisons = (List<Map<String, Object>>) response
                         .get("automatedComparisons");
-                BenchmarkRunner.verifyAnomalies(automatedComparisons);
+                verifyAnomalies(automatedComparisons, project);
             }
         } else {
             String errMsg = BenchmarkRunner.getErrorResponseMessage(response);
@@ -529,4 +604,62 @@ public class Launcher implements Plugin<Project> {
 
         return verifiedComparisonConfig;
     }
+    
+	private void verifyAnomalies(List<Map<String, Object>> automatedComparisons, Project project)
+			throws TooManyAnomaliesException {
+        List<String> comparisonAnomalySources = new ArrayList<String>();
+        project.getLogger().lifecycle("v a called.");
+		project.getLogger().error(
+				"-----------------------------------------------------------------------------------------");
+		project.getLogger().lifecycle(
+				"                                 Verifying anomalies...                                  ");
+		project.getLogger().lifecycle(
+				"-----------------------------------------------------------------------------------------");
+		for (Map<String, Object> automatedComparison : automatedComparisons) {
+
+			Integer totalFailedBenchmarks = (Integer) automatedComparison.get("totalFailedBenchmarks");
+			Map<String, Object> config = (Map<String, Object>) automatedComparison.get("config");
+			if (config.containsKey("anomaliesAllowed")) {
+				project.getLogger().lifecycle("Automated regression test completed.");
+                Integer anomaliesAllowed = (Integer) config.get("anomaliesAllowed");
+                String comparisonSource = ((String) config.get("configName")).contains("Automated Comparison UI") ? "Automated Comparison UI" : "Comparison Config file";
+                project.getLogger().lifecycle("Comparison source: {}", comparisonSource);
+				if (totalFailedBenchmarks != null && totalFailedBenchmarks > anomaliesAllowed) {
+					project.getLogger().lifecycle(
+							"There were more anomaly benchmarks than configured anomalies allowed in one of your automated comparison configurations!");
+                    if (!shouldFail) {
+					project.getLogger().lifecycle(
+							"Your report has still been generated, but your pipeline (if applicable) has failed.");
+                    }
+                    shouldFail = true;
+                    comparisonAnomalySources.add(comparisonSource);
+				} else {
+					if (totalFailedBenchmarks != null && totalFailedBenchmarks > 0) {
+						project.getLogger().lifecycle("Anomaly benchmarks detected, but total amount of anomalies is less than configured threshold.");
+					} else {
+						project.getLogger().lifecycle("No anomaly benchmarks detected!");
+					}
+				}
+                project.getLogger().lifecycle("Total anomalies: " + totalFailedBenchmarks + " | Anomalies allowed: " + anomaliesAllowed + " (" + comparisonSource + ")\n");
+			}
+		}
+        if (shouldFail) {
+            throw new TooManyAnomaliesException(comparisonAnomalySources.toString());
+        }
+       
+	}
+    
+	public boolean checkExistsAndNotNull(Properties props, String key) {
+		try {
+			if (props.containsKey(key)) {
+				if (!props.getProperty(key).isBlank()) {
+					return true;
+				}
+			}
+		} catch (Exception e) {
+			System.out.println("Error checking property validity.");
+			System.out.println(e);
+		}
+		return false;
+	}
 }

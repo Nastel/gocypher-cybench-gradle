@@ -58,74 +58,76 @@ public final class PluginUtils {
         return fileName;
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public static void fingerprintAndHashGeneration(Project project, BenchmarkList benchmarkList,
-            Map<String, String> generatedFingerprints, Map<String, String> manualFingerprints,
-            Map<String, String> classFingerprints) {
-        Set<BenchmarkListEntry> all = benchmarkList.getAll(new JMHUtils.SilentOutputFormat(),
-                Collections.<String> emptyList());
-        List<String> benchmarkNames = all.stream().map(BenchmarkListEntry::getUserClassQName)
-                .collect(Collectors.toList());
-        URL[] urlsArray = getUrlsArray(project);
-        try (URLClassLoader cl = new URLClassLoader(urlsArray)) {
-            for (String benchmarkClass : benchmarkNames) {
-                Class<?> cls = cl.loadClass(benchmarkClass);
-                JavaClass javaClass = Repository.lookupClass(cls);
-                Class benchmarkAnnotationClass = cl.loadClass("org.openjdk.jmh.annotations.Benchmark");
-                List<String> benchmarkMethods = new ArrayList<>();
-                for (java.lang.reflect.Method method1 : cls.getMethods()) {
-                    if (method1.getAnnotation(benchmarkAnnotationClass) != null) {
-                        String name = method1.getName();
-                        benchmarkMethods.add(name);
-                    }
-                }
-                for (Method method : javaClass.getMethods()) {
-                    String fKey = cls.getName() + "." + method.getName();
-                    try {
-                        if (benchmarkMethods.contains(method.getName())) {
-                            String hash = SecurityUtils.hashByteArray(concatArrays(method.getName().getBytes(),
-                                    method.getSignature().getBytes(), method.getCode().getCode()));
-                            generatedFingerprints.put(fKey, hash);
-                        }
-                    } catch (Exception e) {
-                        project.getLogger().error("Failed to compute hash for method {} in class {}", method.getName(),
-                                cls, e);
-                    }
-                }
-                String classHash = computeClassHash(cls, project);
-                java.lang.reflect.Method[] methods = cls.getMethods();
-                for (java.lang.reflect.Method method : methods) {
-                    String fKey = cls.getName() + "." + method.getName();
-                    if (method.getAnnotation(benchmarkAnnotationClass) != null) {
-                        if (cl.findResource(PluginConstants.BENCHMARK_TAG) != null) {
-                            Class benchmarkAnnotationTagClass = cl.loadClass(PluginConstants.BENCHMARK_TAG);
-                            Annotation annotation = method.getAnnotation(benchmarkAnnotationTagClass);
-                            if (annotation != null) {
-                                String tag = null;
-                                if (annotation.toString().contains(PluginConstants.BENCHMARK_TAG)) {
-                                    String result = StringUtils.substringBetween(annotation.toString(), "(", ")");
-                                    tag = result.replace("tag=", "");
-                                }
-                                manualFingerprints.put(fKey, tag);
-                            } else {
-                                Method javaMethod = javaClass.getMethod(method);
-                                if (javaMethod != null) {
-                                    String methodSignature = javaClass.getClassName() + "." + javaMethod.getName()
-                                            + javaMethod.getGenericSignature();
-                                    String hash = SecurityUtils.computeStringHash(methodSignature);
-                                    project.getLogger().info("Computed method {} hash {}", methodSignature, hash);
-                                    manualFingerprints.put(fKey, hash);
-                                }
-                            }
-                        }
-                    }
-                    classFingerprints.put(fKey, classHash);
-                }
-            }
-        } catch (Exception exc) {
-            project.getLogger().error("Class not found in the classpath for execution", exc);
-        }
-    }
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public static void fingerprintAndHashGeneration(Project project, BenchmarkList benchmarkList,
+			Map<String, String> generatedFingerprints, Map<String, String> manualFingerprints,
+			Map<String, String> classFingerprints) {
+		Set<BenchmarkListEntry> all = benchmarkList.getAll(new JMHUtils.SilentOutputFormat(),
+				Collections.<String>emptyList());
+		List<String> benchmarkNames = all.stream().map(BenchmarkListEntry::getUserClassQName)
+				.collect(Collectors.toList());
+		URL[] urlsArray = getUrlsArray(project);
+		try (URLClassLoader cl = new URLClassLoader(urlsArray)) {
+			for (String benchmarkClass : benchmarkNames) {
+				Class<?> cls = cl.loadClass(benchmarkClass);
+				JavaClass javaClass = Repository.lookupClass(cls);
+				Class benchmarkAnnotationClass = cl.loadClass("org.openjdk.jmh.annotations.Benchmark");
+				List<String> benchmarkMethods = new ArrayList<>();
+				for (java.lang.reflect.Method method1 : cls.getMethods()) {
+					if (method1.getAnnotation(benchmarkAnnotationClass) != null) {
+						String name = method1.getName();
+						benchmarkMethods.add(name);
+					}
+				}
+				for (Method method : javaClass.getMethods()) {
+					String fKey = cls.getName() + "." + method.getName();
+					try {
+						if (benchmarkMethods.contains(method.getName())) {
+							String hash = SecurityUtils.hashByteArray(concatArrays(method.getName().getBytes(),
+									method.getSignature().getBytes(), method.getCode().getCode()));
+							generatedFingerprints.put(fKey, hash);
+						}
+					} catch (Exception e) {
+						project.getLogger().error("Failed to compute hash for method {} in class {}", method.getName(),
+								cls, e);
+					}
+				}
+				String classHash = computeClassHash(cls, project);
+				java.lang.reflect.Method[] methods = cls.getMethods();
+				for (java.lang.reflect.Method method : methods) {
+					String fKey = cls.getName() + "." + method.getName();
+					if (method.getAnnotation(benchmarkAnnotationClass) != null) {
+						if (cl.loadClass(PluginConstants.BENCHMARK_TAG) != null) {
+							Class benchmarkAnnotationTagClass = cl.loadClass(PluginConstants.BENCHMARK_TAG);
+							Annotation annotation = method.getAnnotation(benchmarkAnnotationTagClass);
+							if (annotation != null) {
+								String tag = null;
+								if (annotation.toString().contains(PluginConstants.BENCHMARK_TAG)) {
+									String result = StringUtils.substringBetween(annotation.toString(), "(", ")");
+									tag = result.replace("tag=", "");
+								}
+								tag = tag.replaceAll("\"", "");
+								manualFingerprints.put(fKey, tag);
+							} else {
+								Method javaMethod = javaClass.getMethod(method);
+								if (javaMethod != null) {
+									String methodSignature = javaClass.getClassName() + "." + javaMethod.getName()
+											+ javaMethod.getGenericSignature();
+									String hash = SecurityUtils.computeStringHash(methodSignature);
+									project.getLogger().lifecycle("Computed method {} hash {}", methodSignature, hash);
+									manualFingerprints.put(fKey, hash);
+								}
+							}
+
+							classFingerprints.put(fKey, classHash);
+						}
+					}
+				}
+			}
+		} catch (Exception exc) {
+			project.getLogger().error("Class not found in the classpath for execution", exc);
+		}
+	}
 
     public static URL[] getUrlsArray(Project project) {
         SourceSet sourceSets = project.getConvention().getPlugin(JavaPluginConvention.class).getSourceSets()
@@ -190,8 +192,9 @@ public final class PluginUtils {
 
     public static void appendMetadataFromAnnotated(Optional<? extends AnnotatedElement> annotated,
             BenchmarkReport benchmarkReport, Project project, URLClassLoader cl) {
+    	project.getLogger().lifecycle("appending metadata from annotated...");
         try {
-            if (cl.findResource(PluginConstants.METADATA_LIST) != null) {
+            if (cl.loadClass(PluginConstants.METADATA_LIST) != null) {
                 Class<?> cyBenchMetadataList = cl.loadClass(PluginConstants.METADATA_LIST);
                 Class<?> benchmarkMetaData = cl.loadClass(PluginConstants.BENCHMARK_METADATA);
                 if (annotated.isPresent()) {
@@ -205,7 +208,11 @@ public final class PluginUtils {
                                     project, benchmarkReport);
                         }
                     }
+                } else {
+                	project.getLogger().lifecycle("No annotation present.");
                 }
+            } else {
+            	project.getLogger().lifecycle("metadata list was null?");
             }
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
@@ -213,8 +220,8 @@ public final class PluginUtils {
     }
 
     private static void parseCyBenchArrayMetadata(String annotation, Project project, BenchmarkReport benchmarkReport) {
-        String result = StringUtils.substringBetween(annotation, "[", "]");
-        String[] metadataProps = result.split(PluginConstants.BENCHMARK_METADATA_NAME, -1);
+//        String result = StringUtils.substringBetween(annotation, "[", "]");
+        String[] metadataProps = annotation.split(PluginConstants.BENCHMARK_METADATA_NAME, -1);
         parseCyBenchMetadata(metadataProps, project, benchmarkReport);
     }
 
@@ -223,6 +230,9 @@ public final class PluginUtils {
             String key = StringUtils.substringBetween(prop, "key=", ",");
             String value = StringUtils.substringBetween(prop, "value=", ")");
             if (key != null && value != null) {
+                key = key.replaceAll("\"", ""); //strip quotes from tag
+                value = value.replaceAll("\"", "");
+
                 BenchmarkRunner.checkSetOldMetadataProps(key, value, benchmarkReport);
                 benchmarkReport.addMetadata(key, value);
             }
