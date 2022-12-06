@@ -83,7 +83,6 @@ public class Launcher implements Plugin<Project> {
 
         SourceSet sourceSets = project.getConvention().getPlugin(JavaPluginConvention.class).getSourceSets()
                 .getAt("main");
-        checkConfigFileAndOverride(configuration, project);
 
         try {
             cybenchJMHReflectiveTask(project, sourceSets, configuration, loadedAutoConfiguration);
@@ -125,6 +124,8 @@ public class Launcher implements Plugin<Project> {
         project.getLogger()
                 .lifecycle("-----------------------------------------------------------------------------------------");
         System.setProperty("collectHw", "true");
+        checkConfigFileAndOverride(configuration, loadedAutoConfiguration, project);
+
         ComparisonConfig automatedComparisonCfg;
         try {
             automatedComparisonCfg = checkConfigValidity(project, loadedAutoConfiguration);
@@ -194,17 +195,50 @@ public class Launcher implements Plugin<Project> {
         }
     }
     
-    private void checkConfigFileAndOverride(LauncherConfiguration configuration, Project project) {
+    private void checkConfigFileAndOverride(LauncherConfiguration configuration, AutomatedComparisonConfig automatedComparisonConfig, Project project) {
     	try {
     		Properties tempProps = new Properties();
+    		Properties autoProps = new Properties();
     		tempProps.load(new FileInputStream(project.getProjectDir() + "/config/cybench-launcher.properties"));
     		if (!tempProps.isEmpty()) {
     			overrideConfiguration(configuration, tempProps);
     		}
+    		autoProps.load(new FileInputStream(project.getProjectDir() + "/config/cybench-automation.properties"));
+    		if (!autoProps.isEmpty()) {
+    			overrideAutomatedConfiguration(automatedComparisonConfig, autoProps);
+    		}
+    		
     		
     	} catch (Exception e) {
-    		project.getLogger().lifecycle("Error attempting to load cybench-launcher.properties.");
+    		project.getLogger().lifecycle("Error attempting to load config files.");
     	}
+    }
+    
+    private void overrideAutomatedConfiguration(AutomatedComparisonConfig automatedComparisonConfig, Properties props) {
+		if (checkExistsAndNotNull(props, "scope")) {
+			automatedComparisonConfig.setScope((String) props.getProperty("scope"));
+		}
+		if (checkExistsAndNotNull(props, "compareVersion")) {
+			automatedComparisonConfig.setCompareVersion((String) props.getProperty("compareVersion"));
+		}
+		if (checkExistsAndNotNull(props, "numLatestReports")) {
+			automatedComparisonConfig.setNumLatestReports(Integer.parseInt(props.getProperty("numLatestReports")));
+		}
+		if (checkExistsAndNotNull(props, "anomaliesAllowed")) {
+			automatedComparisonConfig.setAnomaliesAllowed(Integer.parseInt(props.getProperty("anomaliesAllowed")));
+		}
+		if (checkExistsAndNotNull(props, "method")) {
+			automatedComparisonConfig.setMethod((String) props.getProperty("method"));   //do conditionals for threshold?
+		}
+		if (checkExistsAndNotNull(props, "threshold")) {
+			automatedComparisonConfig.setThreshold((String) props.getProperty("threshold"));
+		}
+		if (checkExistsAndNotNull(props, "percentChangeAllowed")) {
+			automatedComparisonConfig.setPercentChangeAllowed(Double.parseDouble(props.getProperty("percentChangeAllowed")));
+		}
+		if (checkExistsAndNotNull(props, "deviationsAllowed")) {
+			automatedComparisonConfig.setDeviationsAllowed(Double.parseDouble(props.getProperty("deviationsAllowed")));
+		}
     }
     
     private void overrideConfiguration(LauncherConfiguration configuration, Properties props) {
