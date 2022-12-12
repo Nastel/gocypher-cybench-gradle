@@ -31,7 +31,7 @@ public class LauncherConfiguration {
     private int measurementSeconds = 10;
     private int warmUpIterations = 1;
     private int warmUpSeconds = 5;
-    private Set<Mode> benchmarkModes;
+    private String benchmarkModes;
     private double expectedScore = -1.0d;
     private boolean shouldSendReportToCyBench = false;
     private boolean shouldStoreReportToFileSystem = true;
@@ -98,11 +98,11 @@ public class LauncherConfiguration {
         this.warmUpSeconds = warmUpSeconds;
     }
     
-    public Set<Mode> getBenchmarkModes() {
+    public String getBenchmarkModes() {
     	return benchmarkModes;
     }
     
-    public void setBenchmarkModes(Set<Mode> benchmarkModes) {
+    public void setBenchmarkModes(String benchmarkModes) {
     	this.benchmarkModes = benchmarkModes;
     }
 

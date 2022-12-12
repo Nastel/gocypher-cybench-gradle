@@ -292,7 +292,7 @@ public class Launcher implements Plugin<Project> {
 			configuration.setMeasurementSeconds(Integer.parseInt(props.getProperty("measurementSeconds")));
 		}
 		if (checkExistsAndNotNull(props, "benchmarkModes")) {
-			configuration.setBenchmarkModes(convertExecutionModes(props.getProperty("benchmarkModes")));
+			configuration.setBenchmarkModes(props.getProperty("benchmarkModes"));
 		}
 		
     }
@@ -304,7 +304,7 @@ public class Launcher implements Plugin<Project> {
 		}};
 		
 		try {
-			return Arrays.stream(propertyVal.split(",")).map(String::trim).map(Mode::deepValueOf)
+			return Arrays.stream(propertyVal.split(",")).map(String::trim).map(Mode::deepValueOf) // from BenchmarkRunner.class
 					.collect(Collectors.toSet());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -335,7 +335,9 @@ public class Launcher implements Plugin<Project> {
         	optionsBuilder.measurementTime(TimeValue.seconds(configuration.getMeasurementSeconds()));
         	optionsBuilder.warmupTime(TimeValue.seconds(configuration.getMeasurementSeconds()));
         	optionsBuilder.threads(configuration.getThreads());
-        	for (Mode benchmarkMode : configuration.getBenchmarkModes()) {
+        	
+        	Set<Mode> benchModesForOptions = convertExecutionModes(configuration.getBenchmarkModes());
+        	for (Mode benchmarkMode : benchModesForOptions) {
         		optionsBuilder.mode(benchmarkMode);
         		}
         	} catch (Exception e) {
