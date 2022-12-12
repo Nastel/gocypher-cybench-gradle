@@ -28,6 +28,7 @@ import java.text.MessageFormat;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.EnumUtils;
@@ -38,12 +39,14 @@ import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
+import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.profile.GCProfiler;
 import org.openjdk.jmh.profile.SafepointsProfiler;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.BenchmarkList;
 import org.openjdk.jmh.runner.CompilerHints;
 import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.TimeValue;
 
@@ -66,6 +69,7 @@ import com.gocypher.cybench.utils.AutomatedComparisonConfig;
 import com.gocypher.cybench.utils.LauncherConfiguration;
 import com.gocypher.cybench.utils.PluginConstants;
 import com.gocypher.cybench.utils.PluginUtils;
+import com.google.common.collect.Sets;
 
 public class Launcher implements Plugin<Project> {
 
@@ -287,8 +291,26 @@ public class Launcher implements Plugin<Project> {
 		if (checkExistsAndNotNull(props, "measurementSeconds")) {
 			configuration.setMeasurementSeconds(Integer.parseInt(props.getProperty("measurementSeconds")));
 		}
+		if (checkExistsAndNotNull(props, "benchmarkModes")) {
+			configuration.setBenchmarkModes(convertExecutionModes(props.getProperty("benchmarkModes")));
+		}
 		
     }
+    
+	private Set<Mode> convertExecutionModes(String propertyVal) {
+		ArrayList<Mode> set = new ArrayList<Mode>() {
+			{
+			add(Mode.Throughput); //default
+		}};
+		
+		try {
+			return Arrays.stream(propertyVal.split(",")).map(String::trim).map(Mode::deepValueOf)
+					.collect(Collectors.toSet());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return Sets.newHashSet(set);
+	}
 
     public void initContext(BenchmarkingContext benchContext, Project project) {
         project.getLogger().lifecycle("Collecting hardware, software information...");
@@ -301,25 +323,27 @@ public class Launcher implements Plugin<Project> {
     }
 
     public void buildOptions(BenchmarkingContext benchContext, LauncherConfiguration configuration) {
-        if (configuration.isUseCyBenchBenchmarkSettings()) {
-            benchContext.getOptBuilder().forks(configuration.getForks()) //
-                    .measurementIterations(configuration.getMeasurementIterations()) //
-                    .measurementTime(TimeValue.seconds(configuration.getMeasurementSeconds())) //
-                    .warmupIterations(configuration.getWarmUpIterations()) //
-                    .warmupTime(TimeValue.seconds(configuration.getWarmUpSeconds())) //
-                    .threads(configuration.getThreads()) //
-            ;
-        }
-
-        Options opt = benchContext.getOptBuilder().shouldDoGC(true) //
-                .addProfiler(GCProfiler.class) //
-                // .addProfiler(HotspotThreadProfiler.class) // obsolete
-                // .addProfiler(HotspotRuntimeProfiler.class) // obsolete
-                .addProfiler(SafepointsProfiler.class) //
-                .detectJvmArgs() //
-                .build();
-
-        benchContext.setOptions(opt);
+        ChainedOptionsBuilder optionsBuilder = benchContext.getOptBuilder().shouldDoGC(true)
+        		.addProfiler(GCProfiler.class)
+        		.addProfiler(SafepointsProfiler.class)
+        		.detectJvmArgs();
+        
+        try {
+        	optionsBuilder.forks(configuration.getForks());
+        	optionsBuilder.measurementIterations(configuration.getMeasurementIterations());
+        	optionsBuilder.warmupIterations(configuration.getWarmUpIterations());
+        	optionsBuilder.measurementTime(TimeValue.seconds(configuration.getMeasurementSeconds()));
+        	optionsBuilder.warmupTime(TimeValue.seconds(configuration.getMeasurementSeconds()));
+        	optionsBuilder.threads(configuration.getThreads());
+        	for (Mode benchmarkMode : configuration.getBenchmarkModes()) {
+        		optionsBuilder.mode(benchmarkMode);
+        		}
+        	} catch (Exception e) {
+        		e.printStackTrace();
+        	}
+        
+        
+        benchContext.setOptions(optionsBuilder.build());
     }
 
     public void analyzeBenchmarkClasses(BenchmarkingContext benchContext) {
@@ -639,6 +663,7 @@ public class Launcher implements Plugin<Project> {
         return verifiedComparisonConfig;
     }
     
+	@SuppressWarnings("unchecked")
 	private void verifyAnomalies(List<Map<String, Object>> automatedComparisons, Project project)
 			throws TooManyAnomaliesException {
         List<String> comparisonAnomalySources = new ArrayList<String>();
@@ -652,8 +677,9 @@ public class Launcher implements Plugin<Project> {
 		for (Map<String, Object> automatedComparison : automatedComparisons) {
 
 			Integer totalFailedBenchmarks = (Integer) automatedComparison.get("totalFailedBenchmarks");
+			try {
 			Map<String, Object> config = (Map<String, Object>) automatedComparison.get("config");
-			if (config.containsKey("anomaliesAllowed")) {
+			if (config != null && config.containsKey("anomaliesAllowed")) {
 				project.getLogger().lifecycle("Automated regression test completed.");
                 Integer anomaliesAllowed = (Integer) config.get("anomaliesAllowed");
                 String comparisonSource = ((String) config.get("configName")).contains("Automated Comparison UI") ? "Automated Comparison UI" : "Comparison Config file";
@@ -675,6 +701,9 @@ public class Launcher implements Plugin<Project> {
 					}
 				}
                 project.getLogger().lifecycle("Total anomalies: " + totalFailedBenchmarks + " | Anomalies allowed: " + anomaliesAllowed + " (" + comparisonSource + ")\n");
+			}
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
         if (shouldFail) {

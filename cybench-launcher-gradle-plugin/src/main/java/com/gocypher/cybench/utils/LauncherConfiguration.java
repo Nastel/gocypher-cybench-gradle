@@ -19,6 +19,10 @@
 
 package com.gocypher.cybench.utils;
 
+import java.util.Set;
+
+import org.openjdk.jmh.annotations.Mode;
+
 public class LauncherConfiguration {
     public static final String DEFAULT_NAME = "CyBench Report";
     private int forks = 1;
@@ -27,6 +31,7 @@ public class LauncherConfiguration {
     private int measurementSeconds = 10;
     private int warmUpIterations = 1;
     private int warmUpSeconds = 5;
+    private Set<Mode> benchmarkModes;
     private double expectedScore = -1.0d;
     private boolean shouldSendReportToCyBench = false;
     private boolean shouldStoreReportToFileSystem = true;
@@ -91,6 +96,14 @@ public class LauncherConfiguration {
 
     public void setWarmUpSeconds(int warmUpSeconds) {
         this.warmUpSeconds = warmUpSeconds;
+    }
+    
+    public Set<Mode> getBenchmarkModes() {
+    	return benchmarkModes;
+    }
+    
+    public void setBenchmarkModes(Set<Mode> benchmarkModes) {
+    	this.benchmarkModes = benchmarkModes;
     }
 
     public double getExpectedScore() {
